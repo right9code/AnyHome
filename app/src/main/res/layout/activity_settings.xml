@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/white"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/settings_version"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="12sp"
+        android:textColor="@color/black"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:id="@+id/settings_github_link"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/repo_link"
+        android:textSize="12sp"
+        android:textColor="@color/black"
+        android:textStyle="bold"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:id="@+id/settings_rows_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/pref_rows"
+        android:textSize="14sp"
+        android:textColor="@color/black" />
+
+    <SeekBar
+        android:id="@+id/settings_rows"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="7"
+        android:min="1"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:id="@+id/settings_cols_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/pref_cols"
+        android:textSize="14sp"
+        android:textColor="@color/black" />
+
+    <SeekBar
+        android:id="@+id/settings_cols"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="3"
+        android:min="1"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:id="@+id/settings_icon_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/pref_icon_mode"
+        android:textSize="14sp"
+        android:textColor="@color/black"
+        android:layout_marginBottom="4dp" />
+
+    <RadioGroup
+        android:id="@+id/settings_icon_mode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="12dp">
+
+        <RadioButton
+            android:id="@+id/icon_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Text"
+            android:textSize="12sp"
+            android:textColor="@color/black" />
+
+        <RadioButton
+            android:id="@+id/icon_monogram"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Mono"
+            android:textSize="12sp"
+            android:textColor="@color/black" />
+
+        <RadioButton
+            android:id="@+id/icon_system"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="System"
+            android:textSize="12sp"
+            android:textColor="@color/black" />
+
+    </RadioGroup>
+
+    <CheckBox
+        android:id="@+id/settings_show_pinned"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/pref_show_pinned"
+        android:textColor="@color/black"
+        android:layout_marginBottom="8dp" />
+
+    <CheckBox
+        android:id="@+id/settings_show_nav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/pref_show_nav"
+        android:textColor="@color/black"
+        android:layout_marginBottom="8dp" />
+
+    <CheckBox
+        android:id="@+id/settings_show_search"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/pref_show_search"
+        android:textColor="@color/black"
+        android:layout_marginBottom="8dp" />
+
+    <CheckBox
+        android:id="@+id/settings_show_borders"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/pref_show_borders"
+        android:textColor="@color/black"
+        android:layout_marginBottom="8dp" />
+
+    <CheckBox
+        android:id="@+id/settings_edge_swipe"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Edge swipe controls"
+        android:textColor="@color/black"
+        android:layout_marginBottom="4dp" />
+
+    <CheckBox
+        android:id="@+id/settings_cold_light_left"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Cold light on left edge"
+        android:textColor="@color/black"
+        android:layout_marginBottom="4dp" />
+
+    <CheckBox
+        android:id="@+id/settings_warm_light_right"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Warm light on right edge"
+        android:textColor="@color/black"
+        android:layout_marginBottom="12dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="12dp">
+
+        <Button
+            android:id="@+id/pick_kiosk_btn"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="@string/pick_kiosk_app"
+            android:background="@color/white"
+            android:textColor="@color/black"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/pick_font_btn"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="@string/pick_font"
+            android:background="@color/white"
+            android:textColor="@color/black"
+            android:layout_marginStart="4dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

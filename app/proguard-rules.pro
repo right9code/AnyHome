@@ -1,0 +1,6 @@
+-keep public class com.right9code.AnyHome.MainActivity
+-keep public class com.right9code.AnyHome.ui.SettingsActivity
+-keep public class com.right9code.AnyHome.services.BootReceiver
+-keep public class com.right9code.AnyHome.services.KioskTileService
+-keep public class com.right9code.AnyHome.services.CaffeineTileService
+-keep public class com.right9code.AnyHome.services.EInkAccessibilityService
