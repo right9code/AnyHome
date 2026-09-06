@@ -16,11 +16,7 @@ object PreferencesManager {
     private const val PREF_SHOW_BORDERS = "pref_show_borders"
     private const val PREF_CUSTOM_FONT = "pref_custom_font"
     private const val PREF_PINNED_APPS = "pref_pinned_apps"
-    private const val PREF_EDGE_SWIPE_ENABLED = "pref_edge_swipe_enabled"
-    private const val PREF_COLD_LIGHT_ON_LEFT = "pref_cold_light_on_left"
-    private const val PREF_WARM_LIGHT_ON_RIGHT = "pref_warm_light_on_right"
-    private const val PREF_COLD_LIGHT_LEVEL = "pref_cold_light_level"
-    private const val PREF_WARM_LIGHT_LEVEL = "pref_warm_light_level"
+    private const val PREF_VOLUME_NAV = "pref_volume_nav"
 
     private lateinit var prefs: android.content.SharedPreferences
 
@@ -79,23 +75,7 @@ object PreferencesManager {
         get() = prefs.getStringSet(PREF_PINNED_APPS, emptySet()) ?: emptySet()
         set(value) = prefs.edit().putStringSet(PREF_PINNED_APPS, value).apply()
 
-    var edgeSwipeEnabled: Boolean
-        get() = prefs.getBoolean(PREF_EDGE_SWIPE_ENABLED, true)
-        set(value) = prefs.edit().putBoolean(PREF_EDGE_SWIPE_ENABLED, value).apply()
-
-    var coldLightOnLeft: Boolean
-        get() = prefs.getBoolean(PREF_COLD_LIGHT_ON_LEFT, true)
-        set(value) = prefs.edit().putBoolean(PREF_COLD_LIGHT_ON_LEFT, value).apply()
-
-    var warmLightOnRight: Boolean
-        get() = prefs.getBoolean(PREF_WARM_LIGHT_ON_RIGHT, true)
-        set(value) = prefs.edit().putBoolean(PREF_WARM_LIGHT_ON_RIGHT, value).apply()
-
-    var coldLightLevel: Int
-        get() = prefs.getInt(PREF_COLD_LIGHT_LEVEL, 5)
-        set(value) = prefs.edit().putInt(PREF_COLD_LIGHT_LEVEL, value).apply()
-
-    var warmLightLevel: Int
-        get() = prefs.getInt(PREF_WARM_LIGHT_LEVEL, 7)
-        set(value) = prefs.edit().putInt(PREF_WARM_LIGHT_LEVEL, value).apply()
+    var volumeNav: Boolean
+        get() = prefs.getBoolean(PREF_VOLUME_NAV, false)
+        set(value) = prefs.edit().putBoolean(PREF_VOLUME_NAV, value).apply()
 }

@@ -41,9 +41,7 @@ class SettingsActivity : Activity() {
     private lateinit var settingsShowNav: CheckBox
     private lateinit var settingsShowSearch: CheckBox
     private lateinit var settingsShowBorders: CheckBox
-    private lateinit var settingsEdgeSwipe: CheckBox
-    private lateinit var settingsColdLightLeft: CheckBox
-    private lateinit var settingsWarmLightRight: CheckBox
+    private lateinit var settingsVolumeNav: CheckBox
     private lateinit var pickKioskBtn: Button
     private lateinit var pickFontBtn: Button
 
@@ -65,9 +63,7 @@ class SettingsActivity : Activity() {
         settingsShowNav = findViewById(R.id.settings_show_nav)
         settingsShowSearch = findViewById(R.id.settings_show_search)
         settingsShowBorders = findViewById(R.id.settings_show_borders)
-        settingsEdgeSwipe = findViewById(R.id.settings_edge_swipe)
-        settingsColdLightLeft = findViewById(R.id.settings_cold_light_left)
-        settingsWarmLightRight = findViewById(R.id.settings_warm_light_right)
+        settingsVolumeNav = findViewById(R.id.settings_volume_nav)
         pickKioskBtn = findViewById(R.id.pick_kiosk_btn)
         pickFontBtn = findViewById(R.id.pick_font_btn)
 
@@ -99,9 +95,7 @@ class SettingsActivity : Activity() {
         settingsShowNav.isChecked = PreferencesManager.showNav
         settingsShowSearch.isChecked = PreferencesManager.showSearch
         settingsShowBorders.isChecked = PreferencesManager.showBorders
-        settingsEdgeSwipe.isChecked = PreferencesManager.edgeSwipeEnabled
-        settingsColdLightLeft.isChecked = PreferencesManager.coldLightOnLeft
-        settingsWarmLightRight.isChecked = PreferencesManager.warmLightOnRight
+        settingsVolumeNav.isChecked = PreferencesManager.volumeNav
 
         settingsRows.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -143,15 +137,8 @@ class SettingsActivity : Activity() {
         settingsShowBorders.setOnCheckedChangeListener { _, isChecked ->
             PreferencesManager.showBorders = isChecked
         }
-
-        settingsEdgeSwipe.setOnCheckedChangeListener { _, isChecked ->
-            PreferencesManager.edgeSwipeEnabled = isChecked
-        }
-        settingsColdLightLeft.setOnCheckedChangeListener { _, isChecked ->
-            PreferencesManager.coldLightOnLeft = isChecked
-        }
-        settingsWarmLightRight.setOnCheckedChangeListener { _, isChecked ->
-            PreferencesManager.warmLightOnRight = isChecked
+        settingsVolumeNav.setOnCheckedChangeListener { _, isChecked ->
+            PreferencesManager.volumeNav = isChecked
         }
 
         pickKioskBtn.setOnClickListener {

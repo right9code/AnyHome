@@ -134,26 +134,10 @@
         android:layout_marginBottom="8dp" />
 
     <CheckBox
-        android:id="@+id/settings_edge_swipe"
+        android:id="@+id/settings_volume_nav"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Edge swipe controls"
-        android:textColor="@color/black"
-        android:layout_marginBottom="4dp" />
-
-    <CheckBox
-        android:id="@+id/settings_cold_light_left"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Cold light on left edge"
-        android:textColor="@color/black"
-        android:layout_marginBottom="4dp" />
-
-    <CheckBox
-        android:id="@+id/settings_warm_light_right"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Warm light on right edge"
+        android:text="@string/pref_volume_nav"
         android:textColor="@color/black"
         android:layout_marginBottom="12dp" />
 

@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.content.pm.ActivityInfo
+import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
 import android.net.Uri
 import android.os.Process
@@ -58,21 +59,14 @@ class MainActivity : Activity() {
     private lateinit var prevBtn: Button
     private lateinit var nextBtn: Button
     private lateinit var pageLabel: TextView
-    private var edgeSwipeEnabled = true
-    private var coldLightOnLeft = true
-    private var warmLightOnRight = true
-    private val colorLightLevels = intArrayOf(
-        0, 2, 20, 30, 40, 50, 60, 70, 80, 90, 102, 108, 114, 120, 126,
-        132, 138, 144, 150, 156, 162, 168, 174, 180, 188, 194, 200, 204,
-        206, 208, 210, 212, 214, 216, 218, 220, 222
-    )
-
     private var allApps: List<ResolveInfo> = emptyList()
     private var pages: List<Page> = emptyList()
     private var currentPage = 1
     private var lastKioskLaunch = 0L
+    private var consecutiveQuickReturns = 0
+    private var lastHomeTapTime = 0L
+    private var homeTapCount = 0
     private val handler = Handler(Looper.getMainLooper())
-    private val homeTapTimestamps = mutableListOf<Long>()
     private val pinnedApps = mutableSetOf<String>()
 
     private lateinit var gestureDetector: GestureDetector
@@ -266,22 +260,7 @@ class MainActivity : Activity() {
                 val dx = e2.x - (e1?.x ?: 0f)
                 val dy = e2.y - (e1?.y ?: 0f)
                 val dist = Math.hypot(dx.toDouble(), dy.toDouble()).toFloat()
-                val startX = e1?.x ?: 0f
                 if (dist < dpToPx(40)) return false
-
-                if (edgeSwipeEnabled && abs(dy) > abs(dx) * 1.5f) {
-                    val edgeZone = dpToPx(96)
-                    if (startX < edgeZone && coldLightOnLeft) {
-                        Log.d("AnyHome", "cold edge swipe dy=$dy startX=$startX")
-                        if (dy < 0) adjustColdLight(5) else adjustColdLight(-5)
-                        return true
-                    }
-                    if (startX > (root.width - edgeZone) && warmLightOnRight) {
-                        Log.d("AnyHome", "warm edge swipe dy=$dy startX=$startX")
-                        if (dy < 0) adjustWarmLight(5) else adjustWarmLight(-5)
-                        return true
-                    }
-                }
 
                 if (abs(dx) > abs(dy) * 1.5f) {
                     if (dx < 0) nextPage() else prevPage()
@@ -370,9 +349,6 @@ class MainActivity : Activity() {
         searchContainer.visibility = if (PreferencesManager.showSearch) View.VISIBLE else View.GONE
         navBar.visibility = if (PreferencesManager.showNav) View.VISIBLE else View.GONE
         pinnedContainer.visibility = if (PreferencesManager.showPinned) View.VISIBLE else View.GONE
-        edgeSwipeEnabled = PreferencesManager.edgeSwipeEnabled
-        coldLightOnLeft = PreferencesManager.coldLightOnLeft
-        warmLightOnRight = PreferencesManager.warmLightOnRight
         pinnedApps.clear()
         pinnedApps.addAll(PreferencesManager.pinnedApps)
         renderPinnedApps()
@@ -466,32 +442,55 @@ class MainActivity : Activity() {
     private fun showAppOptions(app: ResolveInfo) {
         val pm = packageManager
         val label = app.loadLabel(pm).toString()
-        val isPinned = pinnedApps.contains(app.activityInfo.packageName)
+        val pkgName = app.activityInfo.packageName
+        val isPinned = pinnedApps.contains(pkgName)
+        val appInfo = app.activityInfo.applicationInfo
+        val isSystemApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+        val isUpdatedSystemApp = (appInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
+        val canUninstall = !isSystemApp || isUpdatedSystemApp
 
-        val options = arrayOf(
-            "Set as Home App",
-            if (isPinned) "Unpin from Top" else "Pin to Top"
-        )
+        val options = mutableListOf<String>()
+        options.add("Set as Home App")
+        options.add(if (isPinned) "Unpin from Top" else "Pin to Top")
+        if (canUninstall) {
+            options.add("Uninstall")
+        }
+        options.add("App Info")
 
         AlertDialog.Builder(this)
             .setTitle(label)
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> {
-                        PreferencesManager.kioskPackage = app.activityInfo.packageName
+            .setItems(options.toTypedArray()) { _, which ->
+                when (options[which]) {
+                    "Set as Home App" -> {
+                        PreferencesManager.kioskPackage = pkgName
                         PreferencesManager.kioskEnabled = true
                         Toast.makeText(this, "Home App set", Toast.LENGTH_SHORT).show()
                     }
-                    1 -> {
-                        if (isPinned) {
-                            pinnedApps.remove(app.activityInfo.packageName)
-                            Toast.makeText(this, "Unpinned", Toast.LENGTH_SHORT).show()
-                        } else {
-                            pinnedApps.add(app.activityInfo.packageName)
-                            Toast.makeText(this, "Pinned to top", Toast.LENGTH_SHORT).show()
-                        }
+                    "Pin to Top" -> {
+                        pinnedApps.add(pkgName)
                         PreferencesManager.pinnedApps = pinnedApps
                         renderPinnedApps()
+                        Toast.makeText(this, "Pinned to top", Toast.LENGTH_SHORT).show()
+                    }
+                    "Unpin from Top" -> {
+                        pinnedApps.remove(pkgName)
+                        PreferencesManager.pinnedApps = pinnedApps
+                        renderPinnedApps()
+                        Toast.makeText(this, "Unpinned", Toast.LENGTH_SHORT).show()
+                    }
+                    "Uninstall" -> {
+                        val uninstallIntent = Intent(Intent.ACTION_DELETE).apply {
+                            data = Uri.parse("package:$pkgName")
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        startActivity(uninstallIntent)
+                    }
+                    "App Info" -> {
+                        val infoIntent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.parse("package:$pkgName")
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        startActivity(infoIntent)
                     }
                 }
             }
@@ -615,6 +614,21 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         if (PreferencesManager.kioskEnabled) {
+            val now = SystemClock.elapsedRealtime()
+            val timeSinceLastLaunch = now - lastKioskLaunch
+            if (lastKioskLaunch > 0L && timeSinceLastLaunch < 2500L) {
+                consecutiveQuickReturns++
+                if (consecutiveQuickReturns >= 4) {
+                    PreferencesManager.kioskEnabled = false
+                    consecutiveQuickReturns = 0
+                    Toast.makeText(this, "Home App loop detected: Mode OFF", Toast.LENGTH_LONG).show()
+                }
+            } else {
+                consecutiveQuickReturns = 0
+            }
+        }
+
+        if (PreferencesManager.kioskEnabled) {
             val pkg = PreferencesManager.kioskPackage
             if (!pkg.isNullOrEmpty()) {
                 val pm = packageManager
@@ -635,12 +649,29 @@ class MainActivity : Activity() {
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        val now = SystemClock.uptimeMillis()
-        homeTapTimestamps.add(now)
-        homeTapTimestamps.removeAll { now - it > 1000 }
-        if (homeTapTimestamps.size >= 5) {
-            homeTapTimestamps.clear()
-            toggleKioskMode()
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastHomeTapTime < 1500L) {
+            homeTapCount++
+        } else {
+            homeTapCount = 1
+        }
+        lastHomeTapTime = now
+
+        if (PreferencesManager.kioskEnabled) {
+            if (homeTapCount >= 5) {
+                homeTapCount = 0
+                PreferencesManager.kioskEnabled = false
+                Toast.makeText(this, "Home App mode OFF", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            // Launcher mode: pressing Home returns to first page and clears search
+            if (currentPage != 1) {
+                currentPage = 1
+                renderPage()
+            }
+            if (searchEdit.text.isNotEmpty()) {
+                searchEdit.setText("")
+            }
         }
     }
 
@@ -667,98 +698,29 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun adjustColdLight(delta: Int) {
-        try {
-            val current = lightIndex(PreferencesManager.coldLightLevel)
-            val newIndex = (current + if (delta >= 0) 1 else -1).coerceIn(0, colorLightLevels.lastIndex)
-            setBigmeColdLight(newIndex)
-            PreferencesManager.coldLightLevel = newIndex
-            Log.d("AnyHome", "cold light index $current -> $newIndex")
-        } catch (e: Exception) {
-            Log.w("AnyHome", "cold light write failed", e)
-            requestWriteSettingsPermission()
-        }
-    }
-
-    private fun adjustWarmLight(delta: Int) {
-        try {
-            val current = lightIndex(PreferencesManager.warmLightLevel)
-            val newIndex = (current + if (delta >= 0) 1 else -1).coerceIn(0, colorLightLevels.lastIndex)
-            setBigmeWarmLight(newIndex)
-            PreferencesManager.warmLightLevel = newIndex
-            Log.d("AnyHome", "warm light index $current -> $newIndex")
-        } catch (e: Exception) {
-            Log.w("AnyHome", "warm light write failed", e)
-            requestWriteSettingsPermission()
-        }
-    }
-
-    private fun writeBigmeSystemInt(name: String, value: Int) {
-        val args = Bundle().apply {
-            putString("name", name)
-            putInt("type", 1)
-            putInt("value", value)
-        }
-        // Bigme's system-UID provider can write its protected front-light keys.
-        contentResolver.call(
-            Uri.parse("content://com.xrz.SettingProvider"),
-            "setting_put_data_system",
-            null,
-            args
-        ) ?: throw IllegalStateException("Bigme settings provider unavailable")
-    }
-
-    private fun setBigmeColdLight(index: Int) {
-        val value = colorLightLevels[index]
-        invokeXrzebook("setColdlight", value)
-        writeBigmeSystemInt("ColdValue", index)
-        writeBigmeSystemInt("screen_brightness_cold", value)
-    }
-
-    private fun lightIndex(stored: Int): Int {
-        if (stored <= colorLightLevels.lastIndex) return stored.coerceAtLeast(0)
-        return colorLightLevels.indices.minByOrNull {
-            abs(colorLightLevels[it] - stored)
-        } ?: 0
-    }
-
-    private fun setBigmeWarmLight(index: Int) {
-        val value = colorLightLevels[index]
-        invokeXrzebook("setWarmlight", value)
-        writeBigmeSystemInt("WarmValue", index)
-        writeBigmeSystemInt("screen_brightness_warm", value)
-    }
-
-    private fun invokeXrzebook(methodName: String, value: Int) {
-        val xrzebook = Class.forName("android.hwebook.Xrzebook")
-            .getDeclaredConstructor()
-            .newInstance()
-        xrzebook.javaClass.getMethod(methodName, Int::class.javaPrimitiveType)
-            .invoke(xrzebook, value)
-    }
-
-    private fun requestWriteSettingsPermission() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M &&
-            !android.provider.Settings.System.canWrite(this)
-        ) {
-            startActivity(Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS).apply {
-                data = Uri.parse("package:$packageName")
-            })
-        }
-    }
-
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        return when (keyCode) {
-            KeyEvent.KEYCODE_PAGE_UP, KeyEvent.KEYCODE_VOLUME_UP -> {
-                prevPage()
-                true
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (PreferencesManager.volumeNav) {
+            if (event.action == KeyEvent.ACTION_DOWN) {
+                when (event.keyCode) {
+                    KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_PAGE_UP -> {
+                        prevPage()
+                        return true
+                    }
+                    KeyEvent.KEYCODE_VOLUME_DOWN, KeyEvent.KEYCODE_PAGE_DOWN -> {
+                        nextPage()
+                        return true
+                    }
+                }
+            } else if (event.action == KeyEvent.ACTION_UP) {
+                when (event.keyCode) {
+                    KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_PAGE_UP,
+                    KeyEvent.KEYCODE_VOLUME_DOWN, KeyEvent.KEYCODE_PAGE_DOWN -> {
+                        return true
+                    }
+                }
             }
-            KeyEvent.KEYCODE_PAGE_DOWN, KeyEvent.KEYCODE_VOLUME_DOWN -> {
-                nextPage()
-                true
-            }
-            else -> super.onKeyDown(keyCode, event)
         }
+        return super.dispatchKeyEvent(event)
     }
 
     private fun dpToPx(dp: Int): Float {
