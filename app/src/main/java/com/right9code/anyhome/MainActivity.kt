@@ -62,8 +62,6 @@ class MainActivity : Activity() {
     private lateinit var navBar: LinearLayout
     private lateinit var prevBtn: Button
     private lateinit var nextBtn: Button
-    private lateinit var notifBtn: ImageButton
-    private lateinit var optionsBtn: ImageButton
     private lateinit var pageLabel: TextView
     private var allApps: List<ResolveInfo> = emptyList()
     private var pages: List<Page> = emptyList()
@@ -99,8 +97,6 @@ class MainActivity : Activity() {
         navBar = findViewById(R.id.nav_bar)
         prevBtn = findViewById(R.id.prev_btn)
         nextBtn = findViewById(R.id.next_btn)
-        notifBtn = findViewById(R.id.notif_btn)
-        optionsBtn = findViewById(R.id.options_btn)
         pageLabel = findViewById(R.id.page_label)
 
         setupFullScreen()
@@ -334,12 +330,19 @@ class MainActivity : Activity() {
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        // Exclude header and navBar from GestureDetector interception so buttons get direct click/long-click events
         val navLoc = IntArray(2)
         navBar.getLocationOnScreen(navLoc)
         val inNavBar = (navBar.visibility == View.VISIBLE && event.rawY >= navLoc[1])
-        if (inNavBar) {
+
+        val headerLoc = IntArray(2)
+        header.getLocationOnScreen(headerLoc)
+        val inHeader = (header.visibility == View.VISIBLE && event.rawY <= headerLoc[1] + header.height)
+
+        if (inNavBar || inHeader) {
             return super.dispatchTouchEvent(event)
         }
+
         scaleDetector.onTouchEvent(event)
         gestureDetector.onTouchEvent(event)
         return super.dispatchTouchEvent(event)
@@ -374,14 +377,15 @@ class MainActivity : Activity() {
 
     private fun setupControls() {
         prevBtn.setOnClickListener { prevPage() }
-        nextBtn.setOnClickListener { nextPage() }
-        notifBtn.setOnClickListener {
-            Log.d("AnyHome", "notifBtn clicked directly")
+        prevBtn.setOnLongClickListener {
             openNotifications()
+            true
         }
-        optionsBtn.setOnClickListener {
-            Log.d("AnyHome", "optionsBtn clicked directly")
+
+        nextBtn.setOnClickListener { nextPage() }
+        nextBtn.setOnLongClickListener {
             openQuickSettings()
+            true
         }
 
         searchEdit.addTextChangedListener(object : android.text.TextWatcher {

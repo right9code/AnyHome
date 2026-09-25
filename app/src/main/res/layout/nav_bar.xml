@@ -22,21 +22,7 @@
             android:textSize="14sp"
             android:background="@color/white"
             android:textColor="@color/black"
-            android:minWidth="56dp" />
-
-        <ImageButton
-            android:id="@+id/notif_btn"
-            android:layout_width="48dp"
-            android:layout_height="match_parent"
-            android:layout_marginStart="6dp"
-            android:layout_marginEnd="6dp"
-            android:background="@drawable/bg_border_rect"
-            android:src="@drawable/ic_notification"
-            android:contentDescription="Notification Shade"
-            android:tint="@color/black"
-            android:clickable="true"
-            android:focusable="true"
-            android:padding="10dp" />
+            android:minWidth="64dp" />
 
         <TextView
             android:id="@+id/page_label"
@@ -44,23 +30,9 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:gravity="center"
-            android:textSize="13sp"
+            android:textSize="14sp"
             android:textColor="@color/black"
             android:text="Page 1 / 1" />
-
-        <ImageButton
-            android:id="@+id/options_btn"
-            android:layout_width="48dp"
-            android:layout_height="match_parent"
-            android:layout_marginStart="6dp"
-            android:layout_marginEnd="6dp"
-            android:background="@drawable/bg_border_rect"
-            android:src="@drawable/ic_gear"
-            android:contentDescription="Quick Settings and Options"
-            android:tint="@color/black"
-            android:clickable="true"
-            android:focusable="true"
-            android:padding="10dp" />
 
         <Button
             android:id="@+id/next_btn"
@@ -70,7 +42,7 @@
             android:textSize="14sp"
             android:background="@color/white"
             android:textColor="@color/black"
-            android:minWidth="56dp" />
+            android:minWidth="64dp" />
 
     </LinearLayout>
 
