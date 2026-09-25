@@ -276,6 +276,11 @@ class MainActivity : Activity() {
                 val topSafeZone = dpToPx(65)
 
                 if (abs(dy) > abs(dx) * 1.1f) {
+                    // If swipe originated from the very top bezel (Y < 40dp) going downwards, let the system show transient status bar peek
+                    if (startY < dpToPx(40) && dy > 0) {
+                        return false
+                    }
+
                     // Left edge swipe (Cold Light ❄️)
                     if (startX <= edgeMargin && startY >= topSafeZone) {
                         val ratio = (abs(dy) / screenHeight).coerceIn(0.04f, 1.0f)
@@ -300,7 +305,7 @@ class MainActivity : Activity() {
                         return true
                     }
 
-                    // Center swipes or swipes starting from top status area
+                    // Center swipes or swipes starting from middle
                     if (dy < 0) swipeUp() else swipeDown()
                     return true
                 }
@@ -349,12 +354,6 @@ class MainActivity : Activity() {
     }
 
     private fun setupFullScreen() {
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
-        )
-        window.attributes.layoutInDisplayCutoutMode =
-            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             window.setDecorFitsSystemWindows(false)
             window.insetsController?.let { controller ->
@@ -727,6 +726,7 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        FrontlightController.restoreLightIfNeeded(this)
         if (PreferencesManager.kioskEnabled) {
             val now = SystemClock.elapsedRealtime()
             val timeSinceLastLaunch = now - lastKioskLaunch

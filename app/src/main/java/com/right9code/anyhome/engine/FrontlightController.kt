@@ -114,6 +114,28 @@ object FrontlightController {
         scheduleSystemSync(context)
     }
 
+    fun restoreLightIfNeeded(context: Context) {
+        executor.execute {
+            try {
+                val hwCold = readSysfs(COLD_PATH) ?: 0
+                val hwWarm = readSysfs(WARM_PATH) ?: 0
+                val sysCold = readSystemSetting(context, "ColdValue") ?: 0
+                val sysWarm = readSystemSetting(context, "WarmValue") ?: 0
+
+                // If hardware is off but system has active levels, restore them
+                if (hwCold == 0 && hwWarm == 0 && (sysCold > 0 || sysWarm > 0)) {
+                    setBoth(context, sysCold, sysWarm)
+                    Log.d(TAG, "Restored frontlight from system settings cold=$sysCold warm=$sysWarm")
+                } else {
+                    currentCold = hwCold
+                    currentWarm = hwWarm
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "restoreLightIfNeeded failed", e)
+            }
+        }
+    }
+
     private fun applyHardware(path: String, value: Int) {
         if (directIoAvailable) {
             try {
