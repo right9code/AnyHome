@@ -202,18 +202,18 @@ class MainActivity : Activity() {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
         settingsBtn.setOnLongClickListener {
-            executeAction(PreferencesManager.actionSettingsLong)
+            executeAction(PreferencesManager.actionSettingsLong, PreferencesManager.actionSettingsLongPkg)
             true
         }
 
         time.setOnClickListener { triggerEInkRefresh() }
         time.setOnLongClickListener {
-            executeAction(PreferencesManager.actionTimeLong)
+            executeAction(PreferencesManager.actionTimeLong, PreferencesManager.actionTimeLongPkg)
             true
         }
         date.setOnClickListener { triggerEInkRefresh() }
         date.setOnLongClickListener {
-            executeAction(PreferencesManager.actionTimeLong)
+            executeAction(PreferencesManager.actionTimeLong, PreferencesManager.actionTimeLongPkg)
             true
         }
     }
@@ -362,7 +362,7 @@ class MainActivity : Activity() {
                 lastPageTapTime = now
                 if (pageTapCount >= 3) {
                     pageTapCount = 0
-                    executeAction(PreferencesManager.actionPageTriple)
+                    executeAction(PreferencesManager.actionPageTriple, PreferencesManager.actionPageTriplePkg)
                     return true
                 }
             }
@@ -407,7 +407,7 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun executeAction(actionId: Int) {
+    private fun executeAction(actionId: Int, appPkg: String? = null) {
         when (actionId) {
             PreferencesManager.ACTION_TOGGLE_FRONTLIGHT -> {
                 val isOn = FrontlightController.toggleLight(this)
@@ -422,6 +422,30 @@ class MainActivity : Activity() {
             }
             PreferencesManager.ACTION_CONTROL_CENTER -> {
                 openQuickSettings()
+            }
+            PreferencesManager.ACTION_SYSTEM_SETTINGS -> {
+                try {
+                    startActivity(Intent(android.provider.Settings.ACTION_SETTINGS).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    })
+                } catch (e: Exception) {
+                    Log.e("AnyHome", "Failed to open system settings", e)
+                }
+            }
+            PreferencesManager.ACTION_LAUNCH_APP -> {
+                if (!appPkg.isNullOrEmpty()) {
+                    try {
+                        val launchIntent = packageManager.getLaunchIntentForPackage(appPkg)
+                        if (launchIntent != null) {
+                            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+                            startActivity(launchIntent)
+                        } else {
+                            Toast.makeText(this, "App not found", Toast.LENGTH_SHORT).show()
+                        }
+                    } catch (e: Exception) {
+                        Log.e("AnyHome", "Failed to launch $appPkg", e)
+                    }
+                }
             }
             PreferencesManager.ACTION_REFRESH_SCREEN -> {
                 triggerEInkRefresh()
@@ -441,13 +465,13 @@ class MainActivity : Activity() {
     private fun setupControls() {
         prevBtn.setOnClickListener { prevPage() }
         prevBtn.setOnLongClickListener {
-            executeAction(PreferencesManager.actionPrevLong)
+            executeAction(PreferencesManager.actionPrevLong, PreferencesManager.actionPrevLongPkg)
             true
         }
 
         nextBtn.setOnClickListener { nextPage() }
         nextBtn.setOnLongClickListener {
-            executeAction(PreferencesManager.actionNextLong)
+            executeAction(PreferencesManager.actionNextLong, PreferencesManager.actionNextLongPkg)
             true
         }
 
@@ -463,7 +487,7 @@ class MainActivity : Activity() {
 
             if (pageTapCount >= 3) {
                 pageTapCount = 0
-                executeAction(PreferencesManager.actionPageTriple)
+                executeAction(PreferencesManager.actionPageTriple, PreferencesManager.actionPageTriplePkg)
             }
         }
 

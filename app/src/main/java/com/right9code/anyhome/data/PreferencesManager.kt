@@ -23,6 +23,12 @@ object PreferencesManager {
     private const val PREF_ACTION_TIME_LONG = "pref_action_time_long"
     private const val PREF_ACTION_SETTINGS_LONG = "pref_action_settings_long"
 
+    private const val PREF_APP_PAGE_TRIPLE = "pref_app_page_triple"
+    private const val PREF_APP_PREV_LONG = "pref_app_prev_long"
+    private const val PREF_APP_NEXT_LONG = "pref_app_next_long"
+    private const val PREF_APP_TIME_LONG = "pref_app_time_long"
+    private const val PREF_APP_SETTINGS_LONG = "pref_app_settings_long"
+
     // Action identifiers:
     // 0: None
     // 1: Toggle Frontlight (On/Off)
@@ -31,6 +37,8 @@ object PreferencesManager {
     // 4: Refresh E-Ink Screen
     // 5: Launcher Settings
     // 6: Lock Screen
+    // 7: System Settings (Android OS Settings)
+    // 8: Launch App
     const val ACTION_NONE = 0
     const val ACTION_TOGGLE_FRONTLIGHT = 1
     const val ACTION_NOTIFICATION_SHADE = 2
@@ -38,6 +46,8 @@ object PreferencesManager {
     const val ACTION_REFRESH_SCREEN = 4
     const val ACTION_LAUNCHER_SETTINGS = 5
     const val ACTION_LOCK_SCREEN = 6
+    const val ACTION_SYSTEM_SETTINGS = 7
+    const val ACTION_LAUNCH_APP = 8
 
     private lateinit var prefs: android.content.SharedPreferences
 
@@ -117,6 +127,26 @@ object PreferencesManager {
         set(value) = prefs.edit().putInt(PREF_ACTION_TIME_LONG, value).apply()
 
     var actionSettingsLong: Int
-        get() = prefs.getInt(PREF_ACTION_SETTINGS_LONG, ACTION_REFRESH_SCREEN)
+        get() = prefs.getInt(PREF_ACTION_SETTINGS_LONG, ACTION_SYSTEM_SETTINGS)
         set(value) = prefs.edit().putInt(PREF_ACTION_SETTINGS_LONG, value).apply()
+
+    var actionPageTriplePkg: String?
+        get() = prefs.getString(PREF_APP_PAGE_TRIPLE, null)
+        set(value) = prefs.edit().putString(PREF_APP_PAGE_TRIPLE, value).apply()
+
+    var actionPrevLongPkg: String?
+        get() = prefs.getString(PREF_APP_PREV_LONG, null)
+        set(value) = prefs.edit().putString(PREF_APP_PREV_LONG, value).apply()
+
+    var actionNextLongPkg: String?
+        get() = prefs.getString(PREF_APP_NEXT_LONG, null)
+        set(value) = prefs.edit().putString(PREF_APP_NEXT_LONG, value).apply()
+
+    var actionTimeLongPkg: String?
+        get() = prefs.getString(PREF_APP_TIME_LONG, null)
+        set(value) = prefs.edit().putString(PREF_APP_TIME_LONG, value).apply()
+
+    var actionSettingsLongPkg: String?
+        get() = prefs.getString(PREF_APP_SETTINGS_LONG, null)
+        set(value) = prefs.edit().putString(PREF_APP_SETTINGS_LONG, value).apply()
 }

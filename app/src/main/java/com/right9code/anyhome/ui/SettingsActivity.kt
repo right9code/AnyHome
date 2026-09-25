@@ -274,7 +274,17 @@ class SettingsActivity : Activity() {
         }
     }
 
-    private fun getActionName(actionId: Int): String {
+    private fun getAppLabel(pkg: String?): String? {
+        if (pkg.isNullOrEmpty()) return null
+        return try {
+            val appInfo = packageManager.getApplicationInfo(pkg, 0)
+            packageManager.getApplicationLabel(appInfo).toString()
+        } catch (e: Exception) {
+            pkg
+        }
+    }
+
+    private fun getActionName(actionId: Int, appPkg: String?): String {
         return when (actionId) {
             PreferencesManager.ACTION_TOGGLE_FRONTLIGHT -> "Toggle Frontlight (On/Off)"
             PreferencesManager.ACTION_NOTIFICATION_SHADE -> "Open Notification Shade"
@@ -282,6 +292,8 @@ class SettingsActivity : Activity() {
             PreferencesManager.ACTION_REFRESH_SCREEN -> "Refresh E-Ink Display"
             PreferencesManager.ACTION_LAUNCHER_SETTINGS -> "Open Launcher Settings"
             PreferencesManager.ACTION_LOCK_SCREEN -> "Lock Screen"
+            PreferencesManager.ACTION_SYSTEM_SETTINGS -> "Open Android System Settings"
+            PreferencesManager.ACTION_LAUNCH_APP -> "Launch: ${getAppLabel(appPkg) ?: "App"}"
             else -> "None"
         }
     }
@@ -293,72 +305,214 @@ class SettingsActivity : Activity() {
             "Toggle Frontlight (On/Off)",
             "Open Notification Shade",
             "Open Control Center / Quick Settings",
+            "Open Android System Settings",
             "Refresh E-Ink Display",
             "Open Launcher Settings",
             "Lock Screen",
+            "Launch Installed App…",
             "None"
         )
         val actionIds = intArrayOf(
             PreferencesManager.ACTION_TOGGLE_FRONTLIGHT,
             PreferencesManager.ACTION_NOTIFICATION_SHADE,
             PreferencesManager.ACTION_CONTROL_CENTER,
+            PreferencesManager.ACTION_SYSTEM_SETTINGS,
             PreferencesManager.ACTION_REFRESH_SCREEN,
             PreferencesManager.ACTION_LAUNCHER_SETTINGS,
             PreferencesManager.ACTION_LOCK_SCREEN,
+            PreferencesManager.ACTION_LAUNCH_APP,
             PreferencesManager.ACTION_NONE
         )
 
         btnGesturePageTriple.setOnClickListener {
-            showActionSelector("Page Number Triple-Tap", actionOptions, actionIds) { chosenId ->
-                PreferencesManager.actionPageTriple = chosenId
-                updateGestureLabels()
-            }
+            showActionSelector("Page Number Triple-Tap", actionOptions, actionIds,
+                onActionSelected = { chosenId ->
+                    PreferencesManager.actionPageTriple = chosenId
+                    PreferencesManager.actionPageTriplePkg = null
+                    updateGestureLabels()
+                },
+                onAppPick = { pkg ->
+                    PreferencesManager.actionPageTriple = PreferencesManager.ACTION_LAUNCH_APP
+                    PreferencesManager.actionPageTriplePkg = pkg
+                    updateGestureLabels()
+                }
+            )
         }
 
         btnGesturePrevLong.setOnClickListener {
-            showActionSelector("PREV Button Long-Press", actionOptions, actionIds) { chosenId ->
-                PreferencesManager.actionPrevLong = chosenId
-                updateGestureLabels()
-            }
+            showActionSelector("PREV Button Long-Press", actionOptions, actionIds,
+                onActionSelected = { chosenId ->
+                    PreferencesManager.actionPrevLong = chosenId
+                    PreferencesManager.actionPrevLongPkg = null
+                    updateGestureLabels()
+                },
+                onAppPick = { pkg ->
+                    PreferencesManager.actionPrevLong = PreferencesManager.ACTION_LAUNCH_APP
+                    PreferencesManager.actionPrevLongPkg = pkg
+                    updateGestureLabels()
+                }
+            )
         }
 
         btnGestureNextLong.setOnClickListener {
-            showActionSelector("NEXT Button Long-Press", actionOptions, actionIds) { chosenId ->
-                PreferencesManager.actionNextLong = chosenId
-                updateGestureLabels()
-            }
+            showActionSelector("NEXT Button Long-Press", actionOptions, actionIds,
+                onActionSelected = { chosenId ->
+                    PreferencesManager.actionNextLong = chosenId
+                    PreferencesManager.actionNextLongPkg = null
+                    updateGestureLabels()
+                },
+                onAppPick = { pkg ->
+                    PreferencesManager.actionNextLong = PreferencesManager.ACTION_LAUNCH_APP
+                    PreferencesManager.actionNextLongPkg = pkg
+                    updateGestureLabels()
+                }
+            )
         }
 
         btnGestureTimeLong.setOnClickListener {
-            showActionSelector("Time Widget Long-Press", actionOptions, actionIds) { chosenId ->
-                PreferencesManager.actionTimeLong = chosenId
-                updateGestureLabels()
-            }
+            showActionSelector("Time Widget Long-Press", actionOptions, actionIds,
+                onActionSelected = { chosenId ->
+                    PreferencesManager.actionTimeLong = chosenId
+                    PreferencesManager.actionTimeLongPkg = null
+                    updateGestureLabels()
+                },
+                onAppPick = { pkg ->
+                    PreferencesManager.actionTimeLong = PreferencesManager.ACTION_LAUNCH_APP
+                    PreferencesManager.actionTimeLongPkg = pkg
+                    updateGestureLabels()
+                }
+            )
         }
 
         btnGestureSettingsLong.setOnClickListener {
-            showActionSelector("Settings Icon Long-Press", actionOptions, actionIds) { chosenId ->
-                PreferencesManager.actionSettingsLong = chosenId
-                updateGestureLabels()
-            }
+            showActionSelector("Settings Icon Long-Press", actionOptions, actionIds,
+                onActionSelected = { chosenId ->
+                    PreferencesManager.actionSettingsLong = chosenId
+                    PreferencesManager.actionSettingsLongPkg = null
+                    updateGestureLabels()
+                },
+                onAppPick = { pkg ->
+                    PreferencesManager.actionSettingsLong = PreferencesManager.ACTION_LAUNCH_APP
+                    PreferencesManager.actionSettingsLongPkg = pkg
+                    updateGestureLabels()
+                }
+            )
         }
     }
 
     private fun updateGestureLabels() {
-        btnGesturePageTriple.text = "Page 3-Tap: ${getActionName(PreferencesManager.actionPageTriple)}"
-        btnGesturePrevLong.text = "PREV Long-Press: ${getActionName(PreferencesManager.actionPrevLong)}"
-        btnGestureNextLong.text = "NEXT Long-Press: ${getActionName(PreferencesManager.actionNextLong)}"
-        btnGestureTimeLong.text = "Time Long-Press: ${getActionName(PreferencesManager.actionTimeLong)}"
-        btnGestureSettingsLong.text = "Gear Long-Press: ${getActionName(PreferencesManager.actionSettingsLong)}"
+        btnGesturePageTriple.text = "Page 3-Tap: ${getActionName(PreferencesManager.actionPageTriple, PreferencesManager.actionPageTriplePkg)}"
+        btnGesturePrevLong.text = "PREV Long-Press: ${getActionName(PreferencesManager.actionPrevLong, PreferencesManager.actionPrevLongPkg)}"
+        btnGestureNextLong.text = "NEXT Long-Press: ${getActionName(PreferencesManager.actionNextLong, PreferencesManager.actionNextLongPkg)}"
+        btnGestureTimeLong.text = "Time Long-Press: ${getActionName(PreferencesManager.actionTimeLong, PreferencesManager.actionTimeLongPkg)}"
+        btnGestureSettingsLong.text = "Gear Long-Press: ${getActionName(PreferencesManager.actionSettingsLong, PreferencesManager.actionSettingsLongPkg)}"
     }
 
-    private fun showActionSelector(title: String, options: Array<String>, ids: IntArray, onSelected: (Int) -> Unit) {
+    private fun showActionSelector(
+        title: String,
+        options: Array<String>,
+        ids: IntArray,
+        onActionSelected: (Int) -> Unit,
+        onAppPick: (String) -> Unit
+    ) {
         AlertDialog.Builder(this)
             .setTitle(title)
             .setItems(options) { dialog, which ->
-                onSelected(ids[which])
-                dialog.dismiss()
+                val chosenId = ids[which]
+                if (chosenId == PreferencesManager.ACTION_LAUNCH_APP) {
+                    dialog.dismiss()
+                    showAppPickerForGesture(title, onAppPick)
+                } else {
+                    onActionSelected(chosenId)
+                    dialog.dismiss()
+                }
             }
+            .setNegativeButton(android.R.string.cancel) { dialog, _ -> dialog.dismiss() }
+            .show()
+    }
+
+    private fun showAppPickerForGesture(title: String, onAppSelected: (String) -> Unit) {
+        val pm = packageManager
+        val apps = mutableListOf<ResolveInfo>()
+        val launcherIntent = Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_LAUNCHER) }
+
+        try {
+            val launcherApps = getSystemService("launcher") as LauncherApps?
+            launcherApps?.getActivityList(null, android.os.Process.myUserHandle())?.forEach { info ->
+                val resolve = ResolveInfo()
+                resolve.activityInfo = pm.getActivityInfo(info.componentName, PackageManager.MATCH_ALL)
+                resolve.resolvePackageName = info.componentName.packageName
+                apps.add(resolve)
+            }
+        } catch (e: Exception) {
+            Log.w("AnyHome", "LauncherApps discovery failed", e)
+        }
+
+        if (apps.isEmpty()) {
+            apps.addAll(pm.queryIntentActivities(launcherIntent, PackageManager.MATCH_ALL))
+        }
+
+        apps.sortBy { it.loadLabel(pm).toString().lowercase() }
+
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(32, 32, 32, 32)
+        }
+
+        val scrollContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+
+        val scrollView = ScrollView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+            )
+            addView(scrollContainer)
+        }
+
+        container.addView(scrollView)
+
+        var dialogRef: AlertDialog? = null
+
+        for (app in apps) {
+            val item = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                setPadding(16, 16, 16, 16)
+            }
+
+            val iconView = ImageView(this).apply {
+                val iconSize = (48 * resources.displayMetrics.density).toInt()
+                layoutParams = LinearLayout.LayoutParams(iconSize, iconSize)
+                val icon = IconProcessor.processIcon(this@SettingsActivity, app.activityInfo.applicationInfo, PreferencesManager.iconMode)
+                if (icon != null) {
+                    setImageDrawable(icon)
+                } else {
+                    visibility = View.GONE
+                }
+            }
+
+            val label = TextView(this).apply {
+                text = app.loadLabel(pm)
+                setPadding(16, 0, 0, 0)
+                textSize = 16f
+                setTextColor(resources.getColor(android.R.color.black, null))
+            }
+
+            item.addView(iconView)
+            item.addView(label)
+
+            item.setOnClickListener {
+                onAppSelected(app.activityInfo.packageName)
+                dialogRef?.dismiss()
+            }
+
+            scrollContainer.addView(item)
+        }
+
+        dialogRef = AlertDialog.Builder(this)
+            .setTitle(title)
+            .setView(container)
             .setNegativeButton(android.R.string.cancel) { dialog, _ -> dialog.dismiss() }
             .show()
     }
