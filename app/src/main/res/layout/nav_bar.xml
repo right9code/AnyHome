@@ -32,6 +32,8 @@
             android:gravity="center"
             android:textSize="14sp"
             android:textColor="@color/black"
+            android:clickable="true"
+            android:focusable="true"
             android:text="Page 1 / 1" />
 
         <Button

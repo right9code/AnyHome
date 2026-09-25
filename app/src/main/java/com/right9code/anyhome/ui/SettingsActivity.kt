@@ -44,6 +44,11 @@ class SettingsActivity : Activity() {
     private lateinit var settingsVolumeNav: CheckBox
     private lateinit var pickKioskBtn: Button
     private lateinit var pickFontBtn: Button
+    private lateinit var btnGesturePageTriple: Button
+    private lateinit var btnGesturePrevLong: Button
+    private lateinit var btnGestureNextLong: Button
+    private lateinit var btnGestureTimeLong: Button
+    private lateinit var btnGestureSettingsLong: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,6 +71,11 @@ class SettingsActivity : Activity() {
         settingsVolumeNav = findViewById(R.id.settings_volume_nav)
         pickKioskBtn = findViewById(R.id.pick_kiosk_btn)
         pickFontBtn = findViewById(R.id.pick_font_btn)
+        btnGesturePageTriple = findViewById(R.id.btn_gesture_page_triple)
+        btnGesturePrevLong = findViewById(R.id.btn_gesture_prev_long)
+        btnGestureNextLong = findViewById(R.id.btn_gesture_next_long)
+        btnGestureTimeLong = findViewById(R.id.btn_gesture_time_long)
+        btnGestureSettingsLong = findViewById(R.id.btn_gesture_settings_long)
 
         settingsVersion.text = getString(R.string.version, getVersionName())
 
@@ -96,6 +106,8 @@ class SettingsActivity : Activity() {
         settingsShowSearch.isChecked = PreferencesManager.showSearch
         settingsShowBorders.isChecked = PreferencesManager.showBorders
         settingsVolumeNav.isChecked = PreferencesManager.volumeNav
+
+        setupGestureButtons()
 
         settingsRows.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -260,6 +272,95 @@ class SettingsActivity : Activity() {
                 }
             }
         }
+    }
+
+    private fun getActionName(actionId: Int): String {
+        return when (actionId) {
+            PreferencesManager.ACTION_TOGGLE_FRONTLIGHT -> "Toggle Frontlight (On/Off)"
+            PreferencesManager.ACTION_NOTIFICATION_SHADE -> "Open Notification Shade"
+            PreferencesManager.ACTION_CONTROL_CENTER -> "Open Control Center / Quick Settings"
+            PreferencesManager.ACTION_REFRESH_SCREEN -> "Refresh E-Ink Display"
+            PreferencesManager.ACTION_LAUNCHER_SETTINGS -> "Open Launcher Settings"
+            PreferencesManager.ACTION_LOCK_SCREEN -> "Lock Screen"
+            else -> "None"
+        }
+    }
+
+    private fun setupGestureButtons() {
+        updateGestureLabels()
+
+        val actionOptions = arrayOf(
+            "Toggle Frontlight (On/Off)",
+            "Open Notification Shade",
+            "Open Control Center / Quick Settings",
+            "Refresh E-Ink Display",
+            "Open Launcher Settings",
+            "Lock Screen",
+            "None"
+        )
+        val actionIds = intArrayOf(
+            PreferencesManager.ACTION_TOGGLE_FRONTLIGHT,
+            PreferencesManager.ACTION_NOTIFICATION_SHADE,
+            PreferencesManager.ACTION_CONTROL_CENTER,
+            PreferencesManager.ACTION_REFRESH_SCREEN,
+            PreferencesManager.ACTION_LAUNCHER_SETTINGS,
+            PreferencesManager.ACTION_LOCK_SCREEN,
+            PreferencesManager.ACTION_NONE
+        )
+
+        btnGesturePageTriple.setOnClickListener {
+            showActionSelector("Page Number Triple-Tap", actionOptions, actionIds) { chosenId ->
+                PreferencesManager.actionPageTriple = chosenId
+                updateGestureLabels()
+            }
+        }
+
+        btnGesturePrevLong.setOnClickListener {
+            showActionSelector("PREV Button Long-Press", actionOptions, actionIds) { chosenId ->
+                PreferencesManager.actionPrevLong = chosenId
+                updateGestureLabels()
+            }
+        }
+
+        btnGestureNextLong.setOnClickListener {
+            showActionSelector("NEXT Button Long-Press", actionOptions, actionIds) { chosenId ->
+                PreferencesManager.actionNextLong = chosenId
+                updateGestureLabels()
+            }
+        }
+
+        btnGestureTimeLong.setOnClickListener {
+            showActionSelector("Time Widget Long-Press", actionOptions, actionIds) { chosenId ->
+                PreferencesManager.actionTimeLong = chosenId
+                updateGestureLabels()
+            }
+        }
+
+        btnGestureSettingsLong.setOnClickListener {
+            showActionSelector("Settings Icon Long-Press", actionOptions, actionIds) { chosenId ->
+                PreferencesManager.actionSettingsLong = chosenId
+                updateGestureLabels()
+            }
+        }
+    }
+
+    private fun updateGestureLabels() {
+        btnGesturePageTriple.text = "Page 3-Tap: ${getActionName(PreferencesManager.actionPageTriple)}"
+        btnGesturePrevLong.text = "PREV Long-Press: ${getActionName(PreferencesManager.actionPrevLong)}"
+        btnGestureNextLong.text = "NEXT Long-Press: ${getActionName(PreferencesManager.actionNextLong)}"
+        btnGestureTimeLong.text = "Time Long-Press: ${getActionName(PreferencesManager.actionTimeLong)}"
+        btnGestureSettingsLong.text = "Gear Long-Press: ${getActionName(PreferencesManager.actionSettingsLong)}"
+    }
+
+    private fun showActionSelector(title: String, options: Array<String>, ids: IntArray, onSelected: (Int) -> Unit) {
+        AlertDialog.Builder(this)
+            .setTitle(title)
+            .setItems(options) { dialog, which ->
+                onSelected(ids[which])
+                dialog.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel) { dialog, _ -> dialog.dismiss() }
+            .show()
     }
 
     companion object {

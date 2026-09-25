@@ -201,9 +201,21 @@ class MainActivity : Activity() {
         settingsBtn.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
+        settingsBtn.setOnLongClickListener {
+            executeAction(PreferencesManager.actionSettingsLong)
+            true
+        }
 
         time.setOnClickListener { triggerEInkRefresh() }
+        time.setOnLongClickListener {
+            executeAction(PreferencesManager.actionTimeLong)
+            true
+        }
         date.setOnClickListener { triggerEInkRefresh() }
+        date.setOnLongClickListener {
+            executeAction(PreferencesManager.actionTimeLong)
+            true
+        }
     }
 
     private fun updateTimeAndDate() {
@@ -335,6 +347,27 @@ class MainActivity : Activity() {
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        // Handle triple-tap detection directly in navBar for page label
+        if (navBar.visibility == View.VISIBLE && event.action == MotionEvent.ACTION_UP) {
+            val pageLoc = IntArray(2)
+            pageLabel.getLocationOnScreen(pageLoc)
+            if (event.rawX >= pageLoc[0] && event.rawX <= pageLoc[0] + pageLabel.width &&
+                event.rawY >= pageLoc[1] && event.rawY <= pageLoc[1] + pageLabel.height) {
+                val now = SystemClock.elapsedRealtime()
+                if (now - lastPageTapTime < 650) {
+                    pageTapCount++
+                } else {
+                    pageTapCount = 1
+                }
+                lastPageTapTime = now
+                if (pageTapCount >= 3) {
+                    pageTapCount = 0
+                    executeAction(PreferencesManager.actionPageTriple)
+                    return true
+                }
+            }
+        }
+
         // Exclude header and navBar from GestureDetector interception so buttons get direct click/long-click events
         val navLoc = IntArray(2)
         navBar.getLocationOnScreen(navLoc)
@@ -374,17 +407,64 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun executeAction(actionId: Int) {
+        when (actionId) {
+            PreferencesManager.ACTION_TOGGLE_FRONTLIGHT -> {
+                val isOn = FrontlightController.toggleLight(this)
+                if (isOn) {
+                    showLightHud("💡 Frontlight: ON (${FrontlightController.currentCold}/${FrontlightController.currentWarm})")
+                } else {
+                    showLightHud("🌑 Frontlight: OFF")
+                }
+            }
+            PreferencesManager.ACTION_NOTIFICATION_SHADE -> {
+                openNotifications()
+            }
+            PreferencesManager.ACTION_CONTROL_CENTER -> {
+                openQuickSettings()
+            }
+            PreferencesManager.ACTION_REFRESH_SCREEN -> {
+                triggerEInkRefresh()
+            }
+            PreferencesManager.ACTION_LAUNCHER_SETTINGS -> {
+                startActivity(Intent(this, SettingsActivity::class.java))
+            }
+            PreferencesManager.ACTION_LOCK_SCREEN -> {
+                performLock()
+            }
+        }
+    }
+
+    private var pageTapCount = 0
+    private var lastPageTapTime = 0L
+
     private fun setupControls() {
         prevBtn.setOnClickListener { prevPage() }
         prevBtn.setOnLongClickListener {
-            openNotifications()
+            executeAction(PreferencesManager.actionPrevLong)
             true
         }
 
         nextBtn.setOnClickListener { nextPage() }
         nextBtn.setOnLongClickListener {
-            openQuickSettings()
+            executeAction(PreferencesManager.actionNextLong)
             true
+        }
+
+        pageLabel.setOnClickListener {
+            val now = SystemClock.elapsedRealtime()
+            if (now - lastPageTapTime < 650) {
+                pageTapCount++
+            } else {
+                pageTapCount = 1
+            }
+            lastPageTapTime = now
+            Log.d("AnyHome", "pageLabel tapped count=$pageTapCount")
+
+            if (pageTapCount >= 3) {
+                pageTapCount = 0
+                executeAction(PreferencesManager.actionPageTriple)
+            }
         }
 
         searchEdit.addTextChangedListener(object : android.text.TextWatcher {

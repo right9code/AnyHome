@@ -169,4 +169,59 @@
 
     </LinearLayout>
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/pref_gestures_title"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="6dp" />
+
+    <Button
+        android:id="@+id/btn_gesture_page_triple"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:background="@drawable/bg_border_rect"
+        android:textColor="@color/black"
+        android:textSize="12sp"
+        android:layout_marginBottom="6dp" />
+
+    <Button
+        android:id="@+id/btn_gesture_prev_long"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:background="@drawable/bg_border_rect"
+        android:textColor="@color/black"
+        android:textSize="12sp"
+        android:layout_marginBottom="6dp" />
+
+    <Button
+        android:id="@+id/btn_gesture_next_long"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:background="@drawable/bg_border_rect"
+        android:textColor="@color/black"
+        android:textSize="12sp"
+        android:layout_marginBottom="6dp" />
+
+    <Button
+        android:id="@+id/btn_gesture_time_long"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:background="@drawable/bg_border_rect"
+        android:textColor="@color/black"
+        android:textSize="12sp"
+        android:layout_marginBottom="6dp" />
+
+    <Button
+        android:id="@+id/btn_gesture_settings_long"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:background="@drawable/bg_border_rect"
+        android:textColor="@color/black"
+        android:textSize="12sp"
+        android:layout_marginBottom="12dp" />
+
 </LinearLayout>

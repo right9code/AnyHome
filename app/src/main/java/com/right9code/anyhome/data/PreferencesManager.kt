@@ -17,6 +17,27 @@ object PreferencesManager {
     private const val PREF_CUSTOM_FONT = "pref_custom_font"
     private const val PREF_PINNED_APPS = "pref_pinned_apps"
     private const val PREF_VOLUME_NAV = "pref_volume_nav"
+    private const val PREF_ACTION_PAGE_TRIPLE = "pref_action_page_triple"
+    private const val PREF_ACTION_PREV_LONG = "pref_action_prev_long"
+    private const val PREF_ACTION_NEXT_LONG = "pref_action_next_long"
+    private const val PREF_ACTION_TIME_LONG = "pref_action_time_long"
+    private const val PREF_ACTION_SETTINGS_LONG = "pref_action_settings_long"
+
+    // Action identifiers:
+    // 0: None
+    // 1: Toggle Frontlight (On/Off)
+    // 2: Notification Shade
+    // 3: Control Center / EinkCenter
+    // 4: Refresh E-Ink Screen
+    // 5: Launcher Settings
+    // 6: Lock Screen
+    const val ACTION_NONE = 0
+    const val ACTION_TOGGLE_FRONTLIGHT = 1
+    const val ACTION_NOTIFICATION_SHADE = 2
+    const val ACTION_CONTROL_CENTER = 3
+    const val ACTION_REFRESH_SCREEN = 4
+    const val ACTION_LAUNCHER_SETTINGS = 5
+    const val ACTION_LOCK_SCREEN = 6
 
     private lateinit var prefs: android.content.SharedPreferences
 
@@ -78,4 +99,24 @@ object PreferencesManager {
     var volumeNav: Boolean
         get() = prefs.getBoolean(PREF_VOLUME_NAV, false)
         set(value) = prefs.edit().putBoolean(PREF_VOLUME_NAV, value).apply()
+
+    var actionPageTriple: Int
+        get() = prefs.getInt(PREF_ACTION_PAGE_TRIPLE, ACTION_TOGGLE_FRONTLIGHT)
+        set(value) = prefs.edit().putInt(PREF_ACTION_PAGE_TRIPLE, value).apply()
+
+    var actionPrevLong: Int
+        get() = prefs.getInt(PREF_ACTION_PREV_LONG, ACTION_NOTIFICATION_SHADE)
+        set(value) = prefs.edit().putInt(PREF_ACTION_PREV_LONG, value).apply()
+
+    var actionNextLong: Int
+        get() = prefs.getInt(PREF_ACTION_NEXT_LONG, ACTION_CONTROL_CENTER)
+        set(value) = prefs.edit().putInt(PREF_ACTION_NEXT_LONG, value).apply()
+
+    var actionTimeLong: Int
+        get() = prefs.getInt(PREF_ACTION_TIME_LONG, ACTION_LOCK_SCREEN)
+        set(value) = prefs.edit().putInt(PREF_ACTION_TIME_LONG, value).apply()
+
+    var actionSettingsLong: Int
+        get() = prefs.getInt(PREF_ACTION_SETTINGS_LONG, ACTION_REFRESH_SCREEN)
+        set(value) = prefs.edit().putInt(PREF_ACTION_SETTINGS_LONG, value).apply()
 }

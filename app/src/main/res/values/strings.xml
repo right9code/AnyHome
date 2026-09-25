@@ -36,4 +36,10 @@
     <string name="caffeine_off">Sleep</string>
     <string name="a11y_service_label">AnyHome E-Ink</string>
     <string name="a11y_service_description">Lock screen and global actions for AnyHome</string>
+    <string name="pref_gestures_title">Custom Long-Press &amp; Tap Gestures</string>
+    <string name="pref_page_triple">Page Number Triple-Tap</string>
+    <string name="pref_prev_long">PREV Button Long-Press</string>
+    <string name="pref_next_long">NEXT Button Long-Press</string>
+    <string name="pref_time_long">Time Widget Long-Press</string>
+    <string name="pref_settings_long">Settings Icon Long-Press</string>
 </resources>

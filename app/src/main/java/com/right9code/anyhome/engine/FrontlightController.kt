@@ -114,6 +114,26 @@ object FrontlightController {
         scheduleSystemSync(context)
     }
 
+    fun toggleLight(context: Context): Boolean {
+        val hwCold = readSysfs(COLD_PATH) ?: currentCold
+        val hwWarm = readSysfs(WARM_PATH) ?: currentWarm
+        return if (hwCold > 0 || hwWarm > 0) {
+            setBoth(context, 0, 0)
+            false // Light is now OFF
+        } else {
+            val sysCold = readSystemSetting(context, "ColdValue")
+                ?: readSystemSetting(context, "LastColdLight")
+                ?: 0
+            val sysWarm = readSystemSetting(context, "WarmValue")
+                ?: readSystemSetting(context, "LastWarmLight")
+                ?: 0
+            val c = if (sysCold > 0 || sysWarm > 0) sysCold else 0
+            val w = if (sysCold > 0 || sysWarm > 0) sysWarm else 40
+            setBoth(context, c, w)
+            true // Light is now ON
+        }
+    }
+
     fun restoreLightIfNeeded(context: Context) {
         executor.execute {
             try {
