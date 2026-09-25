@@ -17,6 +17,7 @@ object PreferencesManager {
     private const val PREF_CUSTOM_FONT = "pref_custom_font"
     private const val PREF_PINNED_APPS = "pref_pinned_apps"
     private const val PREF_VOLUME_NAV = "pref_volume_nav"
+    private const val PREF_ENABLE_LOCKSCREEN = "pref_enable_lockscreen"
     private const val PREF_ACTION_PAGE_TRIPLE = "pref_action_page_triple"
     private const val PREF_ACTION_PREV_LONG = "pref_action_prev_long"
     private const val PREF_ACTION_NEXT_LONG = "pref_action_next_long"
@@ -109,6 +110,10 @@ object PreferencesManager {
     var volumeNav: Boolean
         get() = prefs.getBoolean(PREF_VOLUME_NAV, false)
         set(value) = prefs.edit().putBoolean(PREF_VOLUME_NAV, value).apply()
+
+    var enableLockscreen: Boolean
+        get() = prefs.getBoolean(PREF_ENABLE_LOCKSCREEN, true)
+        set(value) = prefs.edit().putBoolean(PREF_ENABLE_LOCKSCREEN, value).apply()
 
     var actionPageTriple: Int
         get() = prefs.getInt(PREF_ACTION_PAGE_TRIPLE, ACTION_TOGGLE_FRONTLIGHT)

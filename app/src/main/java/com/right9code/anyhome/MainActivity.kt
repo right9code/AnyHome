@@ -42,6 +42,8 @@ import com.right9code.anyhome.engine.IconProcessor
 import com.right9code.anyhome.engine.Page
 import com.right9code.anyhome.engine.PagedAppViewManager
 import com.right9code.anyhome.ui.SettingsActivity
+import java.text.SimpleDateFormat
+import java.util.Locale
 import java.util.concurrent.Executors
 import kotlin.math.abs
 import kotlin.math.pow
@@ -63,6 +65,15 @@ class MainActivity : Activity() {
     private lateinit var prevBtn: Button
     private lateinit var nextBtn: Button
     private lateinit var pageLabel: TextView
+
+    private lateinit var lockOverlay: LinearLayout
+    private lateinit var lockTime: TextView
+    private lateinit var lockDate: TextView
+    private lateinit var lockBattery: TextView
+    private lateinit var lockHint: TextView
+    private var isLocked: Boolean = false
+    private lateinit var lockGestureDetector: GestureDetector
+
     private var allApps: List<ResolveInfo> = emptyList()
     private var pages: List<Page> = emptyList()
     private var currentPage = 1
@@ -98,6 +109,12 @@ class MainActivity : Activity() {
         prevBtn = findViewById(R.id.prev_btn)
         nextBtn = findViewById(R.id.next_btn)
         pageLabel = findViewById(R.id.page_label)
+
+        lockOverlay = findViewById(R.id.lock_overlay)
+        lockTime = findViewById(R.id.lock_time)
+        lockDate = findViewById(R.id.lock_date)
+        lockBattery = findViewById(R.id.lock_battery)
+        lockHint = findViewById(R.id.lock_hint)
 
         setupFullScreen()
 
@@ -195,6 +212,8 @@ class MainActivity : Activity() {
             addAction(android.content.Intent.ACTION_TIME_CHANGED)
             addAction(android.content.Intent.ACTION_DATE_CHANGED)
             addAction(android.content.Intent.ACTION_BATTERY_CHANGED)
+            addAction(android.content.Intent.ACTION_SCREEN_OFF)
+            addAction(android.content.Intent.ACTION_SCREEN_ON)
         }
         registerReceiver(headerReceiver, filter)
 
@@ -224,6 +243,9 @@ class MainActivity : Activity() {
         val dateFormat = android.text.format.DateFormat.getMediumDateFormat(this)
         time.text = timeFormat.format(now.time)
         date.text = dateFormat.format(now.time)
+        if (isLocked) {
+            updateLockScreenWidgets()
+        }
     }
 
     private fun updateBattery() {
@@ -238,6 +260,38 @@ class MainActivity : Activity() {
         } else {
             "$batteryPct%"
         }
+        if (isLocked) {
+            updateLockScreenWidgets()
+        }
+    }
+
+    private fun updateLockScreenWidgets() {
+        val now = java.util.Calendar.getInstance()
+        val timeFormat = android.text.format.DateFormat.getTimeFormat(this)
+        val dayFormat = SimpleDateFormat("EEEE, MMMM d", Locale.getDefault())
+        lockTime.text = timeFormat.format(now.time)
+        lockDate.text = dayFormat.format(now.time)
+
+        val intent = registerReceiver(null, android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED))
+        val level = intent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+        val scale = intent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
+        val plugged = intent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1) ?: -1
+        val batteryPct = if (level >= 0 && scale > 0) (level * 100 / scale) else 0
+        val charging = plugged == BatteryManager.BATTERY_PLUGGED_AC || plugged == BatteryManager.BATTERY_PLUGGED_USB || plugged == BatteryManager.BATTERY_PLUGGED_WIRELESS
+        lockBattery.text = if (charging) "[ $batteryPct% • CHARGING ]" else "[ $batteryPct% • BATTERY ]"
+    }
+
+    fun lockScreen() {
+        if (!PreferencesManager.enableLockscreen) return
+        isLocked = true
+        updateLockScreenWidgets()
+        lockOverlay.visibility = View.VISIBLE
+    }
+
+    fun unlockScreen() {
+        isLocked = false
+        lockOverlay.visibility = View.GONE
+        triggerEInkRefresh()
     }
 
     private val headerReceiver = object : android.content.BroadcastReceiver() {
@@ -247,6 +301,16 @@ class MainActivity : Activity() {
                 android.content.Intent.ACTION_TIME_CHANGED,
                 android.content.Intent.ACTION_DATE_CHANGED -> updateTimeAndDate()
                 android.content.Intent.ACTION_BATTERY_CHANGED -> updateBattery()
+                android.content.Intent.ACTION_SCREEN_OFF -> {
+                    if (PreferencesManager.enableLockscreen) {
+                        lockScreen()
+                    }
+                }
+                android.content.Intent.ACTION_SCREEN_ON -> {
+                    if (isLocked) {
+                        updateLockScreenWidgets()
+                    }
+                }
             }
         }
     }
@@ -344,9 +408,34 @@ class MainActivity : Activity() {
             }
         })
 
+        lockGestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDown(e: MotionEvent): Boolean = true
+            override fun onDoubleTap(e: MotionEvent): Boolean {
+                unlockScreen()
+                return true
+            }
+            override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                unlockScreen()
+                return true
+            }
+            override fun onFling(e1: MotionEvent?, e2: MotionEvent, vx: Float, vy: Float): Boolean {
+                val dy = e2.y - (e1?.y ?: 0f)
+                if (dy < -dpToPx(30)) {
+                    unlockScreen()
+                    return true
+                }
+                return false
+            }
+        })
+
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        if (isLocked) {
+            lockGestureDetector.onTouchEvent(event)
+            return true
+        }
+
         // Handle triple-tap detection directly in navBar for page label
         if (navBar.visibility == View.VISIBLE && event.action == MotionEvent.ACTION_UP) {
             val pageLoc = IntArray(2)

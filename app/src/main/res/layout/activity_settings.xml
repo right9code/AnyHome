@@ -144,6 +144,14 @@
             android:layout_height="wrap_content"
             android:text="@string/pref_volume_nav"
             android:textColor="@color/black"
+            android:layout_marginBottom="8dp" />
+
+        <CheckBox
+            android:id="@+id/settings_enable_lockscreen"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Enable E-Ink Lock Screen on Wake"
+            android:textColor="@color/black"
             android:layout_marginBottom="12dp" />
 
         <LinearLayout

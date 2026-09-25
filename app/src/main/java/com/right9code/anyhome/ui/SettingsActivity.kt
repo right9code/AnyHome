@@ -42,6 +42,7 @@ class SettingsActivity : Activity() {
     private lateinit var settingsShowSearch: CheckBox
     private lateinit var settingsShowBorders: CheckBox
     private lateinit var settingsVolumeNav: CheckBox
+    private lateinit var settingsEnableLockscreen: CheckBox
     private lateinit var pickKioskBtn: Button
     private lateinit var pickFontBtn: Button
     private lateinit var btnGesturePageTriple: Button
@@ -69,6 +70,7 @@ class SettingsActivity : Activity() {
         settingsShowSearch = findViewById(R.id.settings_show_search)
         settingsShowBorders = findViewById(R.id.settings_show_borders)
         settingsVolumeNav = findViewById(R.id.settings_volume_nav)
+        settingsEnableLockscreen = findViewById(R.id.settings_enable_lockscreen)
         pickKioskBtn = findViewById(R.id.pick_kiosk_btn)
         pickFontBtn = findViewById(R.id.pick_font_btn)
         btnGesturePageTriple = findViewById(R.id.btn_gesture_page_triple)
@@ -106,6 +108,7 @@ class SettingsActivity : Activity() {
         settingsShowSearch.isChecked = PreferencesManager.showSearch
         settingsShowBorders.isChecked = PreferencesManager.showBorders
         settingsVolumeNav.isChecked = PreferencesManager.volumeNav
+        settingsEnableLockscreen.isChecked = PreferencesManager.enableLockscreen
 
         setupGestureButtons()
 
@@ -151,6 +154,9 @@ class SettingsActivity : Activity() {
         }
         settingsVolumeNav.setOnCheckedChangeListener { _, isChecked ->
             PreferencesManager.volumeNav = isChecked
+        }
+        settingsEnableLockscreen.setOnCheckedChangeListener { _, isChecked ->
+            PreferencesManager.enableLockscreen = isChecked
         }
 
         pickKioskBtn.setOnClickListener {
