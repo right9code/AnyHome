@@ -42,6 +42,7 @@ import com.right9code.anyhome.engine.IconProcessor
 import com.right9code.anyhome.engine.Page
 import com.right9code.anyhome.engine.PagedAppViewManager
 import com.right9code.anyhome.ui.SettingsActivity
+import java.util.concurrent.Executors
 import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -333,7 +334,12 @@ class MainActivity : Activity() {
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
-        // Observe touches before child app tiles get a chance to consume them.
+        val navLoc = IntArray(2)
+        navBar.getLocationOnScreen(navLoc)
+        val inNavBar = (navBar.visibility == View.VISIBLE && event.rawY >= navLoc[1])
+        if (inNavBar) {
+            return super.dispatchTouchEvent(event)
+        }
         scaleDetector.onTouchEvent(event)
         gestureDetector.onTouchEvent(event)
         return super.dispatchTouchEvent(event)
@@ -369,8 +375,14 @@ class MainActivity : Activity() {
     private fun setupControls() {
         prevBtn.setOnClickListener { prevPage() }
         nextBtn.setOnClickListener { nextPage() }
-        notifBtn.setOnClickListener { openNotifications() }
-        optionsBtn.setOnClickListener { openQuickSettings() }
+        notifBtn.setOnClickListener {
+            Log.d("AnyHome", "notifBtn clicked directly")
+            openNotifications()
+        }
+        optionsBtn.setOnClickListener {
+            Log.d("AnyHome", "optionsBtn clicked directly")
+            openQuickSettings()
+        }
 
         searchEdit.addTextChangedListener(object : android.text.TextWatcher {
             override fun afterTextChanged(s: android.text.Editable) {
@@ -614,22 +626,55 @@ class MainActivity : Activity() {
     }
 
     private fun openNotifications() {
+        Log.d("AnyHome", "openNotifications invoked")
         try {
-            val statusBarService = getSystemService(STATUS_BAR_SERVICE)
+            val statusBarService = getSystemService("statusbar") ?: getSystemService(STATUS_BAR_SERVICE)
             val method = statusBarService.javaClass.getMethod("expandNotificationsPanel")
             method.invoke(statusBarService)
         } catch (e: Exception) {
-            Runtime.getRuntime().exec(arrayOf("su", "-c", "cmd statusbar expand-notifications 2>/dev/null"))
+            Log.e("AnyHome", "expandNotificationsPanel failed, fallback to root", e)
+            Executors.newSingleThreadExecutor().execute {
+                try {
+                    Runtime.getRuntime().exec(arrayOf("su", "-c", "cmd statusbar expand-notifications 2>/dev/null || input swipe 250 5 250 700 200 2>/dev/null")).waitFor()
+                } catch (e2: Exception) {
+                    Log.e("AnyHome", "openNotifications root shell failed", e2)
+                }
+            }
         }
     }
 
     private fun openQuickSettings() {
+        Log.d("AnyHome", "openQuickSettings invoked")
         try {
-            val statusBarService = getSystemService(STATUS_BAR_SERVICE)
-            val method = statusBarService.javaClass.getMethod("expandSettingsPanel")
-            method.invoke(statusBarService)
+            val res = contentResolver.call(
+                Uri.parse("content://com.xrz.sys.control.provider"),
+                "showMenuControl",
+                null,
+                null
+            )
+            if (res != null) return
         } catch (e: Exception) {
-            Runtime.getRuntime().exec(arrayOf("su", "-c", "cmd statusbar expand-settings 2>/dev/null || content call --uri content://com.xrz.SettingProvider --method setting_einkcenter 2>/dev/null"))
+            Log.d("AnyHome", "content call showMenuControl failed", e)
+        }
+
+        try {
+            val res = contentResolver.call(
+                Uri.parse("content://com.xrz.SettingProvider"),
+                "setting_einkcenter",
+                null,
+                null
+            )
+            if (res != null) return
+        } catch (e: Exception) {
+            Log.d("AnyHome", "content call setting_einkcenter failed", e)
+        }
+
+        Executors.newSingleThreadExecutor().execute {
+            try {
+                Runtime.getRuntime().exec(arrayOf("su", "-c", "content call --uri content://com.xrz.sys.control.provider --method showMenuControl 2>/dev/null || cmd statusbar expand-settings 2>/dev/null")).waitFor()
+            } catch (e2: Exception) {
+                Log.e("AnyHome", "openQuickSettings root shell failed", e2)
+            }
         }
     }
 
