@@ -56,9 +56,9 @@ dependencies {
 }
 
 fun getVersionCode(): Int {
-    return 2
+    return 3
 }
 
 fun getVersionName(): String {
-    return "0.0.2-alpha"
+    return "0.0.3-alpha"
 }

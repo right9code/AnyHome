@@ -37,11 +37,14 @@ import android.widget.TextView
 import android.widget.Toast
 import com.right9code.anyhome.data.PreferencesManager
 import com.right9code.anyhome.engine.FontManager
+import com.right9code.anyhome.engine.FrontlightController
 import com.right9code.anyhome.engine.IconProcessor
 import com.right9code.anyhome.engine.Page
 import com.right9code.anyhome.engine.PagedAppViewManager
 import com.right9code.anyhome.ui.SettingsActivity
 import kotlin.math.abs
+import kotlin.math.pow
+import kotlin.math.roundToInt
 
 class MainActivity : Activity() {
 
@@ -58,6 +61,8 @@ class MainActivity : Activity() {
     private lateinit var navBar: LinearLayout
     private lateinit var prevBtn: Button
     private lateinit var nextBtn: Button
+    private lateinit var notifBtn: ImageButton
+    private lateinit var optionsBtn: ImageButton
     private lateinit var pageLabel: TextView
     private var allApps: List<ResolveInfo> = emptyList()
     private var pages: List<Page> = emptyList()
@@ -68,6 +73,7 @@ class MainActivity : Activity() {
     private var homeTapCount = 0
     private val handler = Handler(Looper.getMainLooper())
     private val pinnedApps = mutableSetOf<String>()
+    private var hudToast: Toast? = null
 
     private lateinit var gestureDetector: GestureDetector
     private lateinit var scaleDetector: ScaleGestureDetector
@@ -76,6 +82,7 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         PreferencesManager.init(this)
         PreferencesManager.resetIconModeIfInvalid()
+        FrontlightController.init(this)
         setContentView(R.layout.activity_main)
 
         root = findViewById(R.id.root)
@@ -91,6 +98,8 @@ class MainActivity : Activity() {
         navBar = findViewById(R.id.nav_bar)
         prevBtn = findViewById(R.id.prev_btn)
         nextBtn = findViewById(R.id.next_btn)
+        notifBtn = findViewById(R.id.notif_btn)
+        optionsBtn = findViewById(R.id.options_btn)
         pageLabel = findViewById(R.id.page_label)
 
         setupFullScreen()
@@ -257,17 +266,50 @@ class MainActivity : Activity() {
             }
 
             override fun onFling(e1: MotionEvent?, e2: MotionEvent, vx: Float, vy: Float): Boolean {
-                val dx = e2.x - (e1?.x ?: 0f)
-                val dy = e2.y - (e1?.y ?: 0f)
+                val startX = e1?.x ?: 0f
+                val startY = e1?.y ?: 0f
+                val dx = e2.x - startX
+                val dy = e2.y - startY
                 val dist = Math.hypot(dx.toDouble(), dy.toDouble()).toFloat()
-                if (dist < dpToPx(40)) return false
+                if (dist < dpToPx(35)) return false
 
-                if (abs(dx) > abs(dy) * 1.5f) {
-                    if (dx < 0) nextPage() else prevPage()
+                val screenWidth = resources.displayMetrics.widthPixels.toFloat()
+                val screenHeight = resources.displayMetrics.heightPixels.toFloat()
+                val edgeMargin = dpToPx(50)
+                val topSafeZone = dpToPx(65)
+
+                if (abs(dy) > abs(dx) * 1.1f) {
+                    // Left edge swipe (Cold Light ❄️)
+                    if (startX <= edgeMargin && startY >= topSafeZone) {
+                        val ratio = (abs(dy) / screenHeight).coerceIn(0.04f, 1.0f)
+                        val step = (255 * (ratio.toDouble().pow(1.3))).roundToInt().coerceIn(2, 255)
+                        val delta = if (dy < 0) step else -step
+                        val newVal = FrontlightController.adjustCold(this@MainActivity, delta)
+                        val pct = Math.round((newVal / 255.0f) * 100)
+                        val deltaStr = if (delta > 0) "+$delta" else "$delta"
+                        showLightHud("❄️ Cool: $newVal/255 ($pct%) [Δ$deltaStr]")
+                        return true
+                    }
+
+                    // Right edge swipe (Warm Light 🔥)
+                    if (startX >= screenWidth - edgeMargin && startY >= topSafeZone) {
+                        val ratio = (abs(dy) / screenHeight).coerceIn(0.04f, 1.0f)
+                        val step = (255 * (ratio.toDouble().pow(1.3))).roundToInt().coerceIn(2, 255)
+                        val delta = if (dy < 0) step else -step
+                        val newVal = FrontlightController.adjustWarm(this@MainActivity, delta)
+                        val pct = Math.round((newVal / 255.0f) * 100)
+                        val deltaStr = if (delta > 0) "+$delta" else "$delta"
+                        showLightHud("🔥 Warm: $newVal/255 ($pct%) [Δ$deltaStr]")
+                        return true
+                    }
+
+                    // Center swipes or swipes starting from top status area
+                    if (dy < 0) swipeUp() else swipeDown()
                     return true
                 }
-                if (abs(dy) > abs(dx) * 1.5f) {
-                    if (dy < 0) swipeUp() else swipeDown()
+
+                if (abs(dx) > abs(dy) * 1.4f) {
+                    if (dx < 0) nextPage() else prevPage()
                     return true
                 }
                 if (dist > dpToPx(80)) {
@@ -327,6 +369,8 @@ class MainActivity : Activity() {
     private fun setupControls() {
         prevBtn.setOnClickListener { prevPage() }
         nextBtn.setOnClickListener { nextPage() }
+        notifBtn.setOnClickListener { openNotifications() }
+        optionsBtn.setOnClickListener { openQuickSettings() }
 
         searchEdit.addTextChangedListener(object : android.text.TextWatcher {
             override fun afterTextChanged(s: android.text.Editable) {
@@ -566,12 +610,33 @@ class MainActivity : Activity() {
     }
 
     private fun swipeDown() {
+        openNotifications()
+    }
+
+    private fun openNotifications() {
         try {
             val statusBarService = getSystemService(STATUS_BAR_SERVICE)
             val method = statusBarService.javaClass.getMethod("expandNotificationsPanel")
             method.invoke(statusBarService)
         } catch (e: Exception) {
-            // ignore
+            Runtime.getRuntime().exec(arrayOf("su", "-c", "cmd statusbar expand-notifications 2>/dev/null"))
+        }
+    }
+
+    private fun openQuickSettings() {
+        try {
+            val statusBarService = getSystemService(STATUS_BAR_SERVICE)
+            val method = statusBarService.javaClass.getMethod("expandSettingsPanel")
+            method.invoke(statusBarService)
+        } catch (e: Exception) {
+            Runtime.getRuntime().exec(arrayOf("su", "-c", "cmd statusbar expand-settings 2>/dev/null || content call --uri content://com.xrz.SettingProvider --method setting_einkcenter 2>/dev/null"))
+        }
+    }
+
+    private fun showLightHud(msg: String) {
+        hudToast?.cancel()
+        hudToast = Toast.makeText(this, msg, Toast.LENGTH_SHORT).apply {
+            show()
         }
     }
 

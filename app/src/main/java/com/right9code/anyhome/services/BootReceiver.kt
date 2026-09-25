@@ -8,6 +8,7 @@ import com.right9code.anyhome.data.PreferencesManager
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
+        PreferencesManager.init(context)
         if (!PreferencesManager.kioskEnabled) return
         val pkg = PreferencesManager.kioskPackage ?: return
         val pm = context.packageManager
