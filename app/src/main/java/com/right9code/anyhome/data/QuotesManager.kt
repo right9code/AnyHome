@@ -50,6 +50,7 @@ object QuotesManager {
     )
 
     private const val PREF_CUSTOM_QUOTES = "pref_custom_quotes_json"
+    private var lastQuoteIndex = -1
 
     fun getQuotes(context: Context): MutableList<String> {
         val prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context)
@@ -79,10 +80,20 @@ object QuotesManager {
         prefs.edit().putString(PREF_CUSTOM_QUOTES, arr.toString()).apply()
     }
 
-    fun getRandomQuote(context: Context): String {
+    fun getNextQuote(context: Context): String {
         val quotes = getQuotes(context)
         if (quotes.isEmpty()) return DEFAULT_QUOTES[0]
-        return quotes[Random().nextInt(quotes.size)]
+        if (quotes.size == 1) return quotes[0]
+        var nextIdx = Random().nextInt(quotes.size)
+        if (nextIdx == lastQuoteIndex) {
+            nextIdx = (nextIdx + 1) % quotes.size
+        }
+        lastQuoteIndex = nextIdx
+        return quotes[nextIdx]
+    }
+
+    fun getRandomQuote(context: Context): String {
+        return getNextQuote(context)
     }
 
     fun addQuote(context: Context, quote: String) {

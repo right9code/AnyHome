@@ -88,6 +88,7 @@ class MainActivity : Activity() {
     private lateinit var pinError: TextView
     private lateinit var btnPinBack: Button
     private val enteredPin = StringBuilder()
+    private var currentLockQuote: String = ""
 
     private var isLocked: Boolean = false
     private lateinit var lockGestureDetector: GestureDetector
@@ -313,8 +314,11 @@ class MainActivity : Activity() {
         val charging = plugged == BatteryManager.BATTERY_PLUGGED_AC || plugged == BatteryManager.BATTERY_PLUGGED_USB || plugged == BatteryManager.BATTERY_PLUGGED_WIRELESS
         lockBattery.text = if (charging) "[ $batteryPct% • CHARGING ]" else "[ $batteryPct% • BATTERY ]"
 
-        // Quote
-        lockQuoteText.text = QuotesManager.getRandomQuote(this)
+        // Quote: only select a new quote if one hasn't been chosen for this lock session
+        if (currentLockQuote.isEmpty()) {
+            currentLockQuote = QuotesManager.getNextQuote(this)
+        }
+        lockQuoteText.text = currentLockQuote
 
         // Owner details
         val name = PreferencesManager.ownerName ?: ""
@@ -440,9 +444,12 @@ class MainActivity : Activity() {
         }
     }
 
-    fun lockScreen() {
+    fun lockScreen(forceNewQuote: Boolean = false) {
         if (!PreferencesManager.enableLockscreen) return
         isLocked = true
+        if (forceNewQuote || currentLockQuote.isEmpty()) {
+            currentLockQuote = QuotesManager.getNextQuote(this)
+        }
         pinKeypadContainer.visibility = View.GONE
         lockContent.visibility = View.VISIBLE
         enteredPin.clear()
@@ -452,6 +459,7 @@ class MainActivity : Activity() {
 
     fun unlockScreen() {
         isLocked = false
+        currentLockQuote = ""
         enteredPin.clear()
         pinKeypadContainer.visibility = View.GONE
         lockContent.visibility = View.VISIBLE
@@ -468,12 +476,16 @@ class MainActivity : Activity() {
                 android.content.Intent.ACTION_BATTERY_CHANGED -> updateBattery()
                 android.content.Intent.ACTION_SCREEN_OFF -> {
                     if (PreferencesManager.enableLockscreen) {
-                        lockScreen()
+                        lockScreen(forceNewQuote = true)
                     }
                 }
                 android.content.Intent.ACTION_SCREEN_ON -> {
-                    if (isLocked) {
-                        updateLockScreenWidgets()
+                    if (PreferencesManager.enableLockscreen) {
+                        if (!isLocked) {
+                            lockScreen(forceNewQuote = true)
+                        } else {
+                            updateLockScreenWidgets()
+                        }
                     }
                 }
             }
@@ -1076,12 +1088,25 @@ class MainActivity : Activity() {
     }
 
     private fun performLock() {
-        val km = getSystemService(KEYGUARD_SERVICE) as android.app.KeyguardManager
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            km.requestDismissKeyguard(this, null)
+        if (PreferencesManager.enableLockscreen) {
+            lockScreen(forceNewQuote = true)
+            handler.postDelayed({
+                Executors.newSingleThreadExecutor().execute {
+                    try {
+                        Runtime.getRuntime().exec(arrayOf("su", "-c", "input keyevent 26 2>/dev/null")).waitFor()
+                    } catch (e: Exception) {
+                        Log.e("AnyHome", "performLock failed", e)
+                    }
+                }
+            }, 150)
         } else {
-            @Suppress("DEPRECATION")
-            km.newKeyguardLock("AnyHome").disableKeyguard()
+            Executors.newSingleThreadExecutor().execute {
+                try {
+                    Runtime.getRuntime().exec(arrayOf("su", "-c", "input keyevent 26 2>/dev/null")).waitFor()
+                } catch (e: Exception) {
+                    Log.e("AnyHome", "performLock failed", e)
+                }
+            }
         }
     }
 
@@ -1096,6 +1121,9 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         FrontlightController.restoreLightIfNeeded(this)
+        if (PreferencesManager.enableLockscreen && isLocked) {
+            lockScreen(forceNewQuote = false)
+        }
         if (PreferencesManager.kioskEnabled) {
             val now = SystemClock.elapsedRealtime()
             val timeSinceLastLaunch = now - lastKioskLaunch
