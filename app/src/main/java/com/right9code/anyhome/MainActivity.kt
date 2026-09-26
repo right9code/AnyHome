@@ -37,6 +37,7 @@ import android.widget.TextView
 import android.widget.Toast
 import com.right9code.anyhome.data.PreferencesManager
 import com.right9code.anyhome.engine.FontManager
+import com.right9code.anyhome.data.QuotesManager
 import com.right9code.anyhome.engine.FrontlightController
 import com.right9code.anyhome.engine.IconProcessor
 import com.right9code.anyhome.engine.Page
@@ -66,11 +67,28 @@ class MainActivity : Activity() {
     private lateinit var nextBtn: Button
     private lateinit var pageLabel: TextView
 
-    private lateinit var lockOverlay: LinearLayout
+    // Lock Screen Views
+    private lateinit var lockOverlay: FrameLayout
+    private lateinit var lockContent: LinearLayout
     private lateinit var lockTime: TextView
     private lateinit var lockDate: TextView
     private lateinit var lockBattery: TextView
+    private lateinit var lockQuoteContainer: LinearLayout
+    private lateinit var lockQuoteText: TextView
+    private lateinit var lockOwnerContainer: LinearLayout
+    private lateinit var lockOwnerName: TextView
+    private lateinit var lockOwnerContacts: TextView
+    private lateinit var lockOwnerAddress: TextView
     private lateinit var lockHint: TextView
+
+    // PIN Keypad Views
+    private lateinit var pinKeypadContainer: LinearLayout
+    private lateinit var pinTitle: TextView
+    private lateinit var pinDots: TextView
+    private lateinit var pinError: TextView
+    private lateinit var btnPinBack: Button
+    private val enteredPin = StringBuilder()
+
     private var isLocked: Boolean = false
     private lateinit var lockGestureDetector: GestureDetector
 
@@ -110,11 +128,25 @@ class MainActivity : Activity() {
         nextBtn = findViewById(R.id.next_btn)
         pageLabel = findViewById(R.id.page_label)
 
+        // Bind Lock Screen & Keypad
         lockOverlay = findViewById(R.id.lock_overlay)
+        lockContent = findViewById(R.id.lock_content)
         lockTime = findViewById(R.id.lock_time)
         lockDate = findViewById(R.id.lock_date)
         lockBattery = findViewById(R.id.lock_battery)
+        lockQuoteContainer = findViewById(R.id.lock_quote_container)
+        lockQuoteText = findViewById(R.id.lock_quote_text)
+        lockOwnerContainer = findViewById(R.id.lock_owner_container)
+        lockOwnerName = findViewById(R.id.lock_owner_name)
+        lockOwnerContacts = findViewById(R.id.lock_owner_contacts)
+        lockOwnerAddress = findViewById(R.id.lock_owner_address)
         lockHint = findViewById(R.id.lock_hint)
+
+        pinKeypadContainer = findViewById(R.id.pin_keypad_container)
+        pinTitle = findViewById(R.id.pin_title)
+        pinDots = findViewById(R.id.pin_dots)
+        pinError = findViewById(R.id.pin_error)
+        btnPinBack = findViewById(R.id.btn_pin_back)
 
         setupFullScreen()
 
@@ -122,6 +154,7 @@ class MainActivity : Activity() {
         setupHeader()
         setupGestures()
         setupControls()
+        setupLockKeypad()
         applySettings()
         recalcPages()
         renderPage()
@@ -279,17 +312,149 @@ class MainActivity : Activity() {
         val batteryPct = if (level >= 0 && scale > 0) (level * 100 / scale) else 0
         val charging = plugged == BatteryManager.BATTERY_PLUGGED_AC || plugged == BatteryManager.BATTERY_PLUGGED_USB || plugged == BatteryManager.BATTERY_PLUGGED_WIRELESS
         lockBattery.text = if (charging) "[ $batteryPct% • CHARGING ]" else "[ $batteryPct% • BATTERY ]"
+
+        // Quote
+        lockQuoteText.text = QuotesManager.getRandomQuote(this)
+
+        // Owner details
+        val name = PreferencesManager.ownerName ?: ""
+        val phone = PreferencesManager.ownerPhone ?: ""
+        val email = PreferencesManager.ownerEmail ?: ""
+        val addr = PreferencesManager.ownerAddress ?: ""
+
+        if (name.isNotEmpty()) {
+            lockOwnerName.visibility = View.VISIBLE
+            lockOwnerName.text = "👤 Owner: $name"
+        } else {
+            lockOwnerName.visibility = View.GONE
+        }
+
+        val contacts = mutableListOf<String>()
+        if (phone.isNotEmpty()) contacts.add("📞 $phone")
+        if (email.isNotEmpty()) contacts.add("✉️ $email")
+        if (contacts.isNotEmpty()) {
+            lockOwnerContacts.visibility = View.VISIBLE
+            lockOwnerContacts.text = contacts.joinToString("  •  ")
+        } else {
+            lockOwnerContacts.visibility = View.GONE
+        }
+
+        if (addr.isNotEmpty()) {
+            lockOwnerAddress.visibility = View.VISIBLE
+            lockOwnerAddress.text = "📍 $addr"
+        } else {
+            lockOwnerAddress.visibility = View.GONE
+        }
+
+        // Display Mode: 0=Full, 1=Quote Only, 2=Owner Only, 3=Clock Only
+        val mode = PreferencesManager.lockDisplayMode
+        val hasOwner = name.isNotEmpty() || phone.isNotEmpty() || email.isNotEmpty() || addr.isNotEmpty()
+        lockQuoteContainer.visibility = if (mode == 0 || mode == 1) View.VISIBLE else View.GONE
+        lockOwnerContainer.visibility = if ((mode == 0 || mode == 2) && hasOwner) View.VISIBLE else View.GONE
+
+        val hasPin = !PreferencesManager.lockPin.isNullOrEmpty()
+        lockHint.text = if (hasPin) "▲ Swipe up or tap to enter PIN" else "▲ Swipe up or tap to unlock"
+    }
+
+    private fun setupLockKeypad() {
+        val pinBtns = intArrayOf(
+            R.id.btn_pin_0, R.id.btn_pin_1, R.id.btn_pin_2, R.id.btn_pin_3,
+            R.id.btn_pin_4, R.id.btn_pin_5, R.id.btn_pin_6, R.id.btn_pin_7,
+            R.id.btn_pin_8, R.id.btn_pin_9
+        )
+        for (i in 0..9) {
+            findViewById<Button>(pinBtns[i]).setOnClickListener {
+                appendPinDigit(i.toString())
+            }
+        }
+        findViewById<Button>(R.id.btn_pin_delete).setOnClickListener {
+            if (enteredPin.isNotEmpty()) {
+                enteredPin.deleteCharAt(enteredPin.length - 1)
+                updatePinDots()
+            }
+        }
+        findViewById<Button>(R.id.btn_pin_enter).setOnClickListener {
+            checkPinAndUnlock()
+        }
+        btnPinBack.setOnClickListener {
+            pinKeypadContainer.visibility = View.GONE
+            lockContent.visibility = View.VISIBLE
+            enteredPin.clear()
+            updatePinDots()
+        }
+    }
+
+    private fun appendPinDigit(d: String) {
+        val targetPin = PreferencesManager.lockPin ?: ""
+        val maxLen = if (targetPin.isNotEmpty()) targetPin.length else 4
+        if (enteredPin.length < maxLen) {
+            enteredPin.append(d)
+            updatePinDots()
+            if (enteredPin.length == maxLen) {
+                handler.postDelayed({ checkPinAndUnlock() }, 100)
+            }
+        }
+    }
+
+    private fun updatePinDots() {
+        val targetPin = PreferencesManager.lockPin ?: ""
+        val maxLen = if (targetPin.isNotEmpty()) targetPin.length else 4
+        val sb = StringBuilder()
+        for (i in 0 until maxLen) {
+            if (i > 0) sb.append("  ")
+            sb.append(if (i < enteredPin.length) "●" else "○")
+        }
+        pinDots.text = sb.toString()
+        pinError.visibility = View.INVISIBLE
+    }
+
+    private fun checkPinAndUnlock() {
+        val targetPin = PreferencesManager.lockPin
+        if (targetPin.isNullOrEmpty() || enteredPin.toString() == targetPin) {
+            unlockScreen()
+        } else {
+            pinError.visibility = View.VISIBLE
+            val targetLen = if (!targetPin.isNullOrEmpty()) targetPin.length else 4
+            val sb = StringBuilder()
+            for (i in 0 until targetLen) {
+                if (i > 0) sb.append("  ")
+                sb.append("●")
+            }
+            pinDots.text = sb.toString()
+            handler.postDelayed({
+                enteredPin.clear()
+                updatePinDots()
+            }, 600)
+        }
+    }
+
+    private fun requestUnlock() {
+        val targetPin = PreferencesManager.lockPin
+        if (!targetPin.isNullOrEmpty()) {
+            lockContent.visibility = View.GONE
+            pinKeypadContainer.visibility = View.VISIBLE
+            enteredPin.clear()
+            updatePinDots()
+        } else {
+            unlockScreen()
+        }
     }
 
     fun lockScreen() {
         if (!PreferencesManager.enableLockscreen) return
         isLocked = true
+        pinKeypadContainer.visibility = View.GONE
+        lockContent.visibility = View.VISIBLE
+        enteredPin.clear()
         updateLockScreenWidgets()
         lockOverlay.visibility = View.VISIBLE
     }
 
     fun unlockScreen() {
         isLocked = false
+        enteredPin.clear()
+        pinKeypadContainer.visibility = View.GONE
+        lockContent.visibility = View.VISIBLE
         lockOverlay.visibility = View.GONE
         triggerEInkRefresh()
     }
@@ -411,18 +576,26 @@ class MainActivity : Activity() {
         lockGestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
             override fun onDown(e: MotionEvent): Boolean = true
             override fun onDoubleTap(e: MotionEvent): Boolean {
-                unlockScreen()
-                return true
+                if (pinKeypadContainer.visibility != View.VISIBLE) {
+                    requestUnlock()
+                    return true
+                }
+                return false
             }
             override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-                unlockScreen()
-                return true
+                if (pinKeypadContainer.visibility != View.VISIBLE) {
+                    requestUnlock()
+                    return true
+                }
+                return false
             }
             override fun onFling(e1: MotionEvent?, e2: MotionEvent, vx: Float, vy: Float): Boolean {
                 val dy = e2.y - (e1?.y ?: 0f)
                 if (dy < -dpToPx(30)) {
-                    unlockScreen()
-                    return true
+                    if (pinKeypadContainer.visibility != View.VISIBLE) {
+                        requestUnlock()
+                        return true
+                    }
                 }
                 return false
             }
@@ -432,6 +605,9 @@ class MainActivity : Activity() {
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         if (isLocked) {
+            if (pinKeypadContainer.visibility == View.VISIBLE) {
+                return super.dispatchTouchEvent(event)
+            }
             lockGestureDetector.onTouchEvent(event)
             return true
         }

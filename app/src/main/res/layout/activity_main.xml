@@ -4,6 +4,7 @@
     android:layout_height="match_parent"
     android:background="@color/white">
 
+    <!-- ── Main Launcher Layout ────────────────────────────────────────── -->
     <LinearLayout
         android:id="@+id/root"
         android:layout_width="match_parent"
@@ -67,74 +68,394 @@
 
     </LinearLayout>
 
-    <LinearLayout
+    <!-- ── E-Ink Lock Screen & Sleep Cover Overlay ─────────────────────── -->
+    <FrameLayout
         android:id="@+id/lock_overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
         android:background="@color/white"
-        android:gravity="center_horizontal"
-        android:padding="24dp"
         android:clickable="true"
         android:focusable="true"
         android:visibility="gone">
 
-        <View
+        <!-- Sleep / Cover Info View -->
+        <LinearLayout
+            android:id="@+id/lock_content"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-
-        <TextView
-            android:id="@+id/lock_time"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="56sp"
-            android:textStyle="bold"
-            android:textColor="@color/black"
-            android:gravity="center"
-            android:text="12:00" />
-
-        <TextView
-            android:id="@+id/lock_date"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="18sp"
-            android:textColor="@color/black"
-            android:layout_marginTop="8dp"
-            android:gravity="center"
-            android:text="Saturday, September 26" />
-
-        <TextView
-            android:id="@+id/lock_battery"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:textColor="@color/black"
-            android:layout_marginTop="20dp"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
-            android:paddingTop="6dp"
-            android:paddingBottom="6dp"
-            android:background="@drawable/bg_border_rect"
-            android:gravity="center"
-            android:text="[ 80% • BATTERY ]" />
+            android:paddingTop="20dp"
+            android:paddingBottom="16dp">
 
-        <View
+            <TextView
+                android:id="@+id/lock_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="50sp"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:gravity="center"
+                android:text="12:00" />
+
+            <TextView
+                android:id="@+id/lock_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="@color/black"
+                android:layout_marginTop="4dp"
+                android:gravity="center"
+                android:text="Saturday, September 26" />
+
+            <TextView
+                android:id="@+id/lock_battery"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:layout_marginTop="12dp"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:background="@drawable/bg_border_rect"
+                android:gravity="center"
+                android:text="[ 80% • BATTERY ]" />
+
+            <!-- Spacer -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <!-- Literary Quote Box -->
+            <LinearLayout
+                android:id="@+id/lock_quote_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_border_rect"
+                android:padding="12dp"
+                android:layout_marginBottom="10dp">
+
+                <TextView
+                    android:id="@+id/lock_quote_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:lineSpacingExtra="3dp"
+                    android:textColor="@color/black"
+                    android:gravity="center"
+                    android:text="&quot;A room without books is like a body without a soul.&quot; — Cicero" />
+            </LinearLayout>
+
+            <!-- Owner & Recovery Contact Box -->
+            <LinearLayout
+                android:id="@+id/lock_owner_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_border_rect"
+                android:padding="10dp"
+                android:layout_marginBottom="10dp">
+
+                <TextView
+                    android:id="@+id/lock_owner_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:text="👤 Owner: Alex" />
+
+                <TextView
+                    android:id="@+id/lock_owner_contacts"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="@color/black"
+                    android:layout_marginTop="3dp"
+                    android:text="📞 +1 555-0199  •  ✉️ owner@mail.com" />
+
+                <TextView
+                    android:id="@+id/lock_owner_address"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="@color/black"
+                    android:layout_marginTop="3dp"
+                    android:text="📍 San Francisco, CA" />
+            </LinearLayout>
+
+            <!-- Spacer -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/lock_hint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="@color/black"
+                android:gravity="center"
+                android:text="▲ Swipe up or tap to unlock"
+                android:layout_marginBottom="8dp" />
+
+        </LinearLayout>
+
+        <!-- ── E-Ink 3x4 PIN Keypad Overlay ────────────────────────────── -->
+        <LinearLayout
+            android:id="@+id/pin_keypad_container"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1.6" />
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:background="@color/white"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:paddingTop="28dp"
+            android:paddingBottom="20dp"
+            android:visibility="gone">
 
-        <TextView
-            android:id="@+id/lock_hint"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="13sp"
-            android:textColor="@color/black"
-            android:gravity="center"
-            android:text="Swipe up or double tap to unlock"
-            android:layout_marginBottom="20dp" />
+            <TextView
+                android:id="@+id/pin_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:text="Enter PIN to Unlock" />
 
-    </LinearLayout>
+            <TextView
+                android:id="@+id/pin_dots"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="28sp"
+                android:textColor="@color/black"
+                android:textStyle="bold"
+                android:letterSpacing="0.4"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="16dp"
+                android:text="○  ○  ○  ○" />
+
+            <TextView
+                android:id="@+id/pin_error"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="@color/black"
+                android:textStyle="bold"
+                android:visibility="invisible"
+                android:layout_marginBottom="12dp"
+                android:text="Incorrect PIN" />
+
+            <!-- Keypad Grid (3x4) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <!-- Row 1: 1, 2, 3 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <Button
+                        android:id="@+id/btn_pin_1"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="1"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_border_rect"
+                        android:textColor="@color/black"
+                        android:layout_marginEnd="6dp" />
+
+                    <Button
+                        android:id="@+id/btn_pin_2"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="2"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_border_rect"
+                        android:textColor="@color/black"
+                        android:layout_marginStart="3dp"
+                        android:layout_marginEnd="3dp" />
+
+                    <Button
+                        android:id="@+id/btn_pin_3"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="3"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_border_rect"
+                        android:textColor="@color/black"
+                        android:layout_marginStart="6dp" />
+                </LinearLayout>
+
+                <!-- Row 2: 4, 5, 6 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <Button
+                        android:id="@+id/btn_pin_4"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="4"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_border_rect"
+                        android:textColor="@color/black"
+                        android:layout_marginEnd="6dp" />
+
+                    <Button
+                        android:id="@+id/btn_pin_5"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="5"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_border_rect"
+                        android:textColor="@color/black"
+                        android:layout_marginStart="3dp"
+                        android:layout_marginEnd="3dp" />
+
+                    <Button
+                        android:id="@+id/btn_pin_6"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="6"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_border_rect"
+                        android:textColor="@color/black"
+                        android:layout_marginStart="6dp" />
+                </LinearLayout>
+
+                <!-- Row 3: 7, 8, 9 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <Button
+                        android:id="@+id/btn_pin_7"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="7"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_border_rect"
+                        android:textColor="@color/black"
+                        android:layout_marginEnd="6dp" />
+
+                    <Button
+                        android:id="@+id/btn_pin_8"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="8"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_border_rect"
+                        android:textColor="@color/black"
+                        android:layout_marginStart="3dp"
+                        android:layout_marginEnd="3dp" />
+
+                    <Button
+                        android:id="@+id/btn_pin_9"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="9"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_border_rect"
+                        android:textColor="@color/black"
+                        android:layout_marginStart="6dp" />
+                </LinearLayout>
+
+                <!-- Row 4: ⌫, 0, ✓ -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="12dp">
+
+                    <Button
+                        android:id="@+id/btn_pin_delete"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="⌫"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_border_rect"
+                        android:textColor="@color/black"
+                        android:layout_marginEnd="6dp" />
+
+                    <Button
+                        android:id="@+id/btn_pin_0"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="0"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_border_rect"
+                        android:textColor="@color/black"
+                        android:layout_marginStart="3dp"
+                        android:layout_marginEnd="3dp" />
+
+                    <Button
+                        android:id="@+id/btn_pin_enter"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="✓"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_border_rect"
+                        android:textColor="@color/black"
+                        android:layout_marginStart="6dp" />
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btn_pin_back"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:text="← Back to Cover"
+                android:textSize="13sp"
+                android:background="@color/white"
+                android:textColor="@color/black"
+                android:layout_marginTop="4dp" />
+
+        </LinearLayout>
+
+    </FrameLayout>
 
 </FrameLayout>

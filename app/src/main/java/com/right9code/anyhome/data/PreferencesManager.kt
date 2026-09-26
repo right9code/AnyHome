@@ -18,6 +18,12 @@ object PreferencesManager {
     private const val PREF_PINNED_APPS = "pref_pinned_apps"
     private const val PREF_VOLUME_NAV = "pref_volume_nav"
     private const val PREF_ENABLE_LOCKSCREEN = "pref_enable_lockscreen"
+    private const val PREF_LOCK_PIN = "pref_lock_pin"
+    private const val PREF_LOCK_DISPLAY_MODE = "pref_lock_display_mode"
+    private const val PREF_OWNER_NAME = "pref_owner_name"
+    private const val PREF_OWNER_PHONE = "pref_owner_phone"
+    private const val PREF_OWNER_EMAIL = "pref_owner_email"
+    private const val PREF_OWNER_ADDRESS = "pref_owner_address"
     private const val PREF_ACTION_PAGE_TRIPLE = "pref_action_page_triple"
     private const val PREF_ACTION_PREV_LONG = "pref_action_prev_long"
     private const val PREF_ACTION_NEXT_LONG = "pref_action_next_long"
@@ -114,6 +120,30 @@ object PreferencesManager {
     var enableLockscreen: Boolean
         get() = prefs.getBoolean(PREF_ENABLE_LOCKSCREEN, true)
         set(value) = prefs.edit().putBoolean(PREF_ENABLE_LOCKSCREEN, value).apply()
+
+    var lockPin: String?
+        get() = prefs.getString(PREF_LOCK_PIN, null)
+        set(value) = prefs.edit().putString(PREF_LOCK_PIN, value).apply()
+
+    var lockDisplayMode: Int
+        get() = prefs.getInt(PREF_LOCK_DISPLAY_MODE, 0)
+        set(value) = prefs.edit().putInt(PREF_LOCK_DISPLAY_MODE, value).apply()
+
+    var ownerName: String?
+        get() = prefs.getString(PREF_OWNER_NAME, null)
+        set(value) = prefs.edit().putString(PREF_OWNER_NAME, value).apply()
+
+    var ownerPhone: String?
+        get() = prefs.getString(PREF_OWNER_PHONE, null)
+        set(value) = prefs.edit().putString(PREF_OWNER_PHONE, value).apply()
+
+    var ownerEmail: String?
+        get() = prefs.getString(PREF_OWNER_EMAIL, null)
+        set(value) = prefs.edit().putString(PREF_OWNER_EMAIL, value).apply()
+
+    var ownerAddress: String?
+        get() = prefs.getString(PREF_OWNER_ADDRESS, null)
+        set(value) = prefs.edit().putString(PREF_OWNER_ADDRESS, value).apply()
 
     var actionPageTriple: Int
         get() = prefs.getInt(PREF_ACTION_PAGE_TRIPLE, ACTION_TOGGLE_FRONTLIGHT)

@@ -2,17 +2,19 @@ package com.right9code.anyhome.ui
 
 import android.app.Activity
 import android.app.AlertDialog
-import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.text.InputType
 import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.RadioButton
@@ -23,11 +25,19 @@ import android.widget.TextView
 import android.widget.Toast
 import com.right9code.anyhome.R
 import com.right9code.anyhome.data.PreferencesManager
+import com.right9code.anyhome.data.QuotesManager
 import com.right9code.anyhome.engine.FontManager
 import com.right9code.anyhome.engine.IconProcessor
 
 class SettingsActivity : Activity() {
 
+    // Tab buttons & scroll views
+    private lateinit var tabBtnLauncher: Button
+    private lateinit var tabBtnLockscreen: Button
+    private lateinit var tabLauncherScroll: ScrollView
+    private lateinit var tabLockscreenScroll: ScrollView
+
+    // Tab 1: Launcher views
     private lateinit var settingsVersion: TextView
     private lateinit var settingsRows: SeekBar
     private lateinit var settingsRowsLabel: TextView
@@ -42,7 +52,6 @@ class SettingsActivity : Activity() {
     private lateinit var settingsShowSearch: CheckBox
     private lateinit var settingsShowBorders: CheckBox
     private lateinit var settingsVolumeNav: CheckBox
-    private lateinit var settingsEnableLockscreen: CheckBox
     private lateinit var pickKioskBtn: Button
     private lateinit var pickFontBtn: Button
     private lateinit var btnGesturePageTriple: Button
@@ -51,11 +60,40 @@ class SettingsActivity : Activity() {
     private lateinit var btnGestureTimeLong: Button
     private lateinit var btnGestureSettingsLong: Button
 
+    // Tab 2: Lock Screen views
+    private lateinit var settingsEnableLockscreen: CheckBox
+    private lateinit var lockPinStatus: TextView
+    private lateinit var btnSetPin: Button
+    private lateinit var rgLockMode: RadioGroup
+    private lateinit var rbModeFull: RadioButton
+    private lateinit var rbModeQuote: RadioButton
+    private lateinit var rbModeOwner: RadioButton
+    private lateinit var rbModeClock: RadioButton
+    private lateinit var ownerInfoPreview: TextView
+    private lateinit var btnEditOwnerInfo: Button
+    private lateinit var quotesCountLabel: TextView
+    private lateinit var btnManageQuotes: Button
+    private lateinit var btnAddQuote: Button
+    private lateinit var btnResetQuotes: Button
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         PreferencesManager.init(this)
         setContentView(R.layout.activity_settings)
 
+        bindViews()
+        setupTabs()
+        setupLauncherTab()
+        setupLockscreenTab()
+    }
+
+    private fun bindViews() {
+        tabBtnLauncher = findViewById(R.id.tab_btn_launcher)
+        tabBtnLockscreen = findViewById(R.id.tab_btn_lockscreen)
+        tabLauncherScroll = findViewById(R.id.tab_launcher_scroll)
+        tabLockscreenScroll = findViewById(R.id.tab_lockscreen_scroll)
+
+        // Launcher views
         settingsVersion = findViewById(R.id.settings_version)
         settingsRows = findViewById(R.id.settings_rows)
         settingsRowsLabel = findViewById(R.id.settings_rows_label)
@@ -70,7 +108,6 @@ class SettingsActivity : Activity() {
         settingsShowSearch = findViewById(R.id.settings_show_search)
         settingsShowBorders = findViewById(R.id.settings_show_borders)
         settingsVolumeNav = findViewById(R.id.settings_volume_nav)
-        settingsEnableLockscreen = findViewById(R.id.settings_enable_lockscreen)
         pickKioskBtn = findViewById(R.id.pick_kiosk_btn)
         pickFontBtn = findViewById(R.id.pick_font_btn)
         btnGesturePageTriple = findViewById(R.id.btn_gesture_page_triple)
@@ -79,6 +116,40 @@ class SettingsActivity : Activity() {
         btnGestureTimeLong = findViewById(R.id.btn_gesture_time_long)
         btnGestureSettingsLong = findViewById(R.id.btn_gesture_settings_long)
 
+        // Lock screen views
+        settingsEnableLockscreen = findViewById(R.id.settings_enable_lockscreen)
+        lockPinStatus = findViewById(R.id.lock_pin_status)
+        btnSetPin = findViewById(R.id.btn_set_pin)
+        rgLockMode = findViewById(R.id.rg_lock_mode)
+        rbModeFull = findViewById(R.id.rb_mode_full)
+        rbModeQuote = findViewById(R.id.rb_mode_quote)
+        rbModeOwner = findViewById(R.id.rb_mode_owner)
+        rbModeClock = findViewById(R.id.rb_mode_clock)
+        ownerInfoPreview = findViewById(R.id.owner_info_preview)
+        btnEditOwnerInfo = findViewById(R.id.btn_edit_owner_info)
+        quotesCountLabel = findViewById(R.id.quotes_count_label)
+        btnManageQuotes = findViewById(R.id.btn_manage_quotes)
+        btnAddQuote = findViewById(R.id.btn_add_quote)
+        btnResetQuotes = findViewById(R.id.btn_reset_quotes)
+    }
+
+    private fun setupTabs() {
+        tabBtnLauncher.setOnClickListener {
+            tabLauncherScroll.visibility = View.VISIBLE
+            tabLockscreenScroll.visibility = View.GONE
+            tabBtnLauncher.setBackgroundResource(R.drawable.bg_border_rect)
+            tabBtnLockscreen.setBackgroundColor(Color.WHITE)
+        }
+
+        tabBtnLockscreen.setOnClickListener {
+            tabLauncherScroll.visibility = View.GONE
+            tabLockscreenScroll.visibility = View.VISIBLE
+            tabBtnLockscreen.setBackgroundResource(R.drawable.bg_border_rect)
+            tabBtnLauncher.setBackgroundColor(Color.WHITE)
+        }
+    }
+
+    private fun setupLauncherTab() {
         settingsVersion.text = getString(R.string.version, getVersionName())
 
         val githubLink = findViewById<TextView>(R.id.settings_github_link)
@@ -108,7 +179,6 @@ class SettingsActivity : Activity() {
         settingsShowSearch.isChecked = PreferencesManager.showSearch
         settingsShowBorders.isChecked = PreferencesManager.showBorders
         settingsVolumeNav.isChecked = PreferencesManager.volumeNav
-        settingsEnableLockscreen.isChecked = PreferencesManager.enableLockscreen
 
         setupGestureButtons()
 
@@ -155,9 +225,6 @@ class SettingsActivity : Activity() {
         settingsVolumeNav.setOnCheckedChangeListener { _, isChecked ->
             PreferencesManager.volumeNav = isChecked
         }
-        settingsEnableLockscreen.setOnCheckedChangeListener { _, isChecked ->
-            PreferencesManager.enableLockscreen = isChecked
-        }
 
         pickKioskBtn.setOnClickListener {
             showKioskPicker()
@@ -175,6 +242,235 @@ class SettingsActivity : Activity() {
         if (intent.getBooleanExtra("EXTRA_PICK_KIOSK", false)) {
             showKioskPicker()
         }
+    }
+
+    private fun setupLockscreenTab() {
+        settingsEnableLockscreen.isChecked = PreferencesManager.enableLockscreen
+        settingsEnableLockscreen.setOnCheckedChangeListener { _, isChecked ->
+            PreferencesManager.enableLockscreen = isChecked
+        }
+
+        updatePinStatusUI()
+        btnSetPin.setOnClickListener { showPinSetupDialog() }
+
+        // Mode RadioGroup
+        when (PreferencesManager.lockDisplayMode) {
+            0 -> rbModeFull.isChecked = true
+            1 -> rbModeQuote.isChecked = true
+            2 -> rbModeOwner.isChecked = true
+            3 -> rbModeClock.isChecked = true
+        }
+
+        rgLockMode.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.rb_mode_full -> PreferencesManager.lockDisplayMode = 0
+                R.id.rb_mode_quote -> PreferencesManager.lockDisplayMode = 1
+                R.id.rb_mode_owner -> PreferencesManager.lockDisplayMode = 2
+                R.id.rb_mode_clock -> PreferencesManager.lockDisplayMode = 3
+            }
+        }
+
+        updateOwnerPreviewUI()
+        btnEditOwnerInfo.setOnClickListener { showEditOwnerDialog() }
+
+        updateQuotesCountUI()
+        btnManageQuotes.setOnClickListener { showManageQuotesDialog() }
+        btnAddQuote.setOnClickListener { showAddQuoteDialog() }
+        btnResetQuotes.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("Reset Quotes Library")
+                .setMessage("Reset to the 40 default literature and philosophy quotes?")
+                .setPositiveButton("Reset") { _, _ ->
+                    QuotesManager.resetQuotes(this)
+                    updateQuotesCountUI()
+                    Toast.makeText(this, "Reset to 40 curated quotes", Toast.LENGTH_SHORT).show()
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
+    }
+
+    private fun updatePinStatusUI() {
+        val pin = PreferencesManager.lockPin
+        if (!pin.isNullOrEmpty()) {
+            lockPinStatus.text = "Status: Protected with ${pin.length}-digit PIN"
+            btnSetPin.text = "Change or Remove PIN..."
+        } else {
+            lockPinStatus.text = "Status: Swipe / Tap to Unlock (No PIN)"
+            btnSetPin.text = "Set 4-Digit Security PIN..."
+        }
+    }
+
+    private fun showPinSetupDialog() {
+        val currentPin = PreferencesManager.lockPin
+        val hasPin = !currentPin.isNullOrEmpty()
+
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(40, 20, 40, 10)
+        }
+
+        val input = EditText(this).apply {
+            hint = if (hasPin) "Enter new PIN (4-6 digits)" else "Enter 4-6 digit PIN"
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            maxLines = 1
+            textSize = 18f
+            setTextColor(Color.BLACK)
+        }
+        layout.addView(input)
+
+        val builder = AlertDialog.Builder(this)
+            .setTitle(if (hasPin) "Change / Remove PIN" else "Set Security PIN")
+            .setView(layout)
+            .setPositiveButton("Save") { _, _ ->
+                val newPin = input.text.toString().trim()
+                if (newPin.length in 4..6) {
+                    PreferencesManager.lockPin = newPin
+                    updatePinStatusUI()
+                    Toast.makeText(this, "PIN saved successfully", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "PIN must be 4 to 6 digits", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+
+        if (hasPin) {
+            builder.setNeutralButton("Remove PIN") { _, _ ->
+                PreferencesManager.lockPin = null
+                updatePinStatusUI()
+                Toast.makeText(this, "PIN removed. Unlocks with swipe.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        builder.show()
+    }
+
+    private fun updateOwnerPreviewUI() {
+        val name = PreferencesManager.ownerName ?: ""
+        val phone = PreferencesManager.ownerPhone ?: ""
+        val email = PreferencesManager.ownerEmail ?: ""
+        val addr = PreferencesManager.ownerAddress ?: ""
+
+        val parts = mutableListOf<String>()
+        if (name.isNotEmpty()) parts.add("👤 $name")
+        if (phone.isNotEmpty()) parts.add("📞 $phone")
+        if (email.isNotEmpty()) parts.add("✉️ $email")
+        if (addr.isNotEmpty()) parts.add("📍 $addr")
+
+        ownerInfoPreview.text = if (parts.isNotEmpty()) parts.joinToString("  •  ") else "No owner details set"
+    }
+
+    private fun showEditOwnerDialog() {
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(36, 16, 36, 10)
+        }
+
+        val nameEdit = EditText(this).apply {
+            hint = "Owner Name (e.g. Alex)"
+            setText(PreferencesManager.ownerName ?: "")
+            setTextColor(Color.BLACK)
+        }
+        val phoneEdit = EditText(this).apply {
+            hint = "Phone Number (e.g. +1 555-0199)"
+            inputType = InputType.TYPE_CLASS_PHONE
+            setText(PreferencesManager.ownerPhone ?: "")
+            setTextColor(Color.BLACK)
+        }
+        val emailEdit = EditText(this).apply {
+            hint = "Email Address (e.g. owner@example.com)"
+            inputType = InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+            setText(PreferencesManager.ownerEmail ?: "")
+            setTextColor(Color.BLACK)
+        }
+        val addrEdit = EditText(this).apply {
+            hint = "Location / Address (e.g. San Francisco, CA)"
+            setText(PreferencesManager.ownerAddress ?: "")
+            setTextColor(Color.BLACK)
+        }
+
+        layout.addView(nameEdit)
+        layout.addView(phoneEdit)
+        layout.addView(emailEdit)
+        layout.addView(addrEdit)
+
+        AlertDialog.Builder(this)
+            .setTitle("Edit Owner & Recovery Info")
+            .setView(layout)
+            .setPositiveButton("Save") { _, _ ->
+                PreferencesManager.ownerName = nameEdit.text.toString().trim()
+                PreferencesManager.ownerPhone = phoneEdit.text.toString().trim()
+                PreferencesManager.ownerEmail = emailEdit.text.toString().trim()
+                PreferencesManager.ownerAddress = addrEdit.text.toString().trim()
+                updateOwnerPreviewUI()
+                Toast.makeText(this, "Owner info updated", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun updateQuotesCountUI() {
+        val count = QuotesManager.getQuotes(this).size
+        quotesCountLabel.text = "Library: $count Quotes (shuffled on each wake)"
+    }
+
+    private fun showManageQuotesDialog() {
+        val quotes = QuotesManager.getQuotes(this)
+        val items = quotes.mapIndexed { idx, q -> "${idx + 1}. $q" }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("Quotes Library (${quotes.size})")
+            .setItems(items) { _, which ->
+                // Option to delete quote
+                AlertDialog.Builder(this)
+                    .setTitle("Delete Quote?")
+                    .setMessage(quotes[which])
+                    .setPositiveButton("Delete") { _, _ ->
+                        QuotesManager.removeQuote(this, which)
+                        updateQuotesCountUI()
+                        Toast.makeText(this, "Quote removed", Toast.LENGTH_SHORT).show()
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            }
+            .setPositiveButton("Add Quote") { _, _ -> showAddQuoteDialog() }
+            .setNegativeButton("Close", null)
+            .show()
+    }
+
+    private fun showAddQuoteDialog() {
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(36, 16, 36, 10)
+        }
+
+        val quoteEdit = EditText(this).apply {
+            hint = "Quote text"
+            setTextColor(Color.BLACK)
+        }
+        val authorEdit = EditText(this).apply {
+            hint = "Author (e.g. Marcus Aurelius)"
+            setTextColor(Color.BLACK)
+        }
+
+        layout.addView(quoteEdit)
+        layout.addView(authorEdit)
+
+        AlertDialog.Builder(this)
+            .setTitle("Add Custom Quote")
+            .setView(layout)
+            .setPositiveButton("Add") { _, _ ->
+                val q = quoteEdit.text.toString().trim()
+                val a = authorEdit.text.toString().trim()
+                if (q.isNotEmpty()) {
+                    val full = if (a.isNotEmpty()) "\"$q\" — $a" else "\"$q\""
+                    QuotesManager.addQuote(this, full)
+                    updateQuotesCountUI()
+                    Toast.makeText(this, "Quote added to library", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun showKioskPicker() {
