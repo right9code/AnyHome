@@ -5,8 +5,19 @@ import android.view.accessibility.AccessibilityEvent
 
 class EInkAccessibilityService : AccessibilityService() {
 
+    companion object {
+        var instance: EInkAccessibilityService? = null
+            private set
+    }
+
     override fun onServiceConnected() {
         super.onServiceConnected()
+        instance = this
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (instance == this) instance = null
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
@@ -17,7 +28,7 @@ class EInkAccessibilityService : AccessibilityService() {
         // No-op
     }
 
-    fun lockScreen() {
-        performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)
+    fun lockScreen(): Boolean {
+        return performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)
     }
 }

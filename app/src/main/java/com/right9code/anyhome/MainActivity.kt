@@ -1090,23 +1090,12 @@ class MainActivity : Activity() {
     private fun performLock() {
         if (PreferencesManager.enableLockscreen) {
             lockScreen(forceNewQuote = true)
+        }
+        val a11y = com.right9code.anyhome.services.EInkAccessibilityService.instance
+        if (a11y != null) {
             handler.postDelayed({
-                Executors.newSingleThreadExecutor().execute {
-                    try {
-                        Runtime.getRuntime().exec(arrayOf("su", "-c", "input keyevent 26 2>/dev/null")).waitFor()
-                    } catch (e: Exception) {
-                        Log.e("AnyHome", "performLock failed", e)
-                    }
-                }
-            }, 150)
-        } else {
-            Executors.newSingleThreadExecutor().execute {
-                try {
-                    Runtime.getRuntime().exec(arrayOf("su", "-c", "input keyevent 26 2>/dev/null")).waitFor()
-                } catch (e: Exception) {
-                    Log.e("AnyHome", "performLock failed", e)
-                }
-            }
+                a11y.lockScreen()
+            }, 100)
         }
     }
 
